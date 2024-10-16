@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gene Stats Calculator</title>
+  <style>
+    /* Reset some default styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      color: #333;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    p {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #555;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    .gene-section {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      flex: 1 1 300px;
+      max-width: 350px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .gene-section h2 {
+      margin-bottom: 15px;
+      color: #34495e;
+      font-size: 1.5em;
+      text-align: center;
+    }
+
+    .gene-section label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .gene-section select {
+      width: 100%;
+      padding: 8px 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      appearance: none;
+      background-color: #fff;
+      background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23343a40"><path d="M6 8L2 4h8z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 12px;
+      cursor: pointer;
+    }
+
+    .gene-list {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      height: 200px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #fafafa;
+      margin-bottom: 10px;
+    }
+
+    .gene-option {
+      padding: 8px;
+      margin-bottom: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .gene-option:hover {
+      background-color: #e1f5fe;
+    }
+
+    .gene-option.selected {
+      background-color: #2196f3;
+      color: #fff;
+    }
+
+    .selected-genes {
+      font-weight: bold;
+      color: #2c3e50;
+      min-height: 24px;
+    }
+
+    .calculate-btn {
+      display: block;
+      width: 200px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 25px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .calculate-btn:hover {
+      background-color: #45a049;
+      transform: translateY(-2px);
+    }
+
+    .calculate-btn:active {
+      transform: translateY(0);
+    }
+
+    #results-table {
+      overflow-x: auto;
+      margin-top: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #2c3e50;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    @media (max-width: 1000px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .gene-section {
+        max-width: 100%;
+      }
+
+      .calculate-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gene Stats Calculator</h1>
+
+  <p>Select one gene per category (Quirk only if you have it):</p>
+
+  <div class="container">
+    <div class="gene-section">
+      <h2>Dominant Genes</h2>
+      <label for="file1-category">Category:</label>
+      <select id="file1-category">
+        <option value="FACTION">FACTION</option>
+        <option value="JOB">JOB</option>
+        <option value="ELEMENT">ELEMENT</option>
+        <option value="WEAPON">WEAPON</option>
+        <option value="QUIRK">QUIRK</option>
+      </select>
+      <div id="file1-genes" class="gene-list"></div>
+      <p>Selected Dominant Genes:</p>
+      <div id="file1-selected-genes" class="selected-genes"></div>
+    </div>
+
+    <div class="gene-section">
+      <h2>Recessive Genes</h2>
+      <label for="file2-category">Category:</label>
+      <select id="file2-category">
+        <option value="FACTION">FACTION</option>
+        <option value="JOB">JOB</option>
+        <option value="ELEMENT">ELEMENT</option>
+        <option value="WEAPON">WEAPON</option>
+        <option value="QUIRK">QUIRK</option>
+      </select>
+      <div id="file2-genes" class="gene-list"></div>
+      <p>Selected Recessive Genes:</p>
+      <div id="file2-selected-genes" class="selected-genes"></div>
+    </div>
+
+    <div class="gene-section">
+      <h2>Minor Genes</h2>
+      <label for="file3-category">Category:</label>
+      <select id="file3-category">
+        <option value="FACTION">FACTION</option>
+        <option value="JOB">JOB</option>
+        <option value="ELEMENT">ELEMENT</option>
+        <option value="WEAPON">WEAPON</option>
+        <option value="QUIRK">QUIRK</option>
+      </select>
+      <div id="file3-genes" class="gene-list"></div>
+      <p>Selected Minor Genes:</p>
+      <div id="file3-selected-genes" class="selected-genes"></div>
+    </div>
+  </div>
+
+  <button class="calculate-btn" onclick="calculateStats()">Calculate Stats</button>
+
+  <div id="results-table"></div>
+
+  <script>
+    // CSV data
+    const csvData1 = `
+Gene,Vitality,Initiative,Phys. Power,Elem. Power,Phys. Resist.,Elem. Resist.,Crit. Chance,Crit. Multiplier
+# FACTION
+Corporation,8,,4,2,,,,
+Cult,,6,,2,,,,
+Empire,,,2,2,,,8,10
+Guardian,4,4,,2,,,,
+Kingdom,8,2,2,,,,,
+Tribe,4,,6,4,,,,
+Undying,12,,2,,,,,
+# JOB
+Arcanist,,4,6,8,,,4,0
+Assassin,4,6,4,4,,,10
+Barbarian,,,6,6,,,12,10
+Druid,16,4,,,0,10,,
+Duelist,8,4,6,4,,,,
+Huntsman,4,4,4,4,,,5
+Inquisitor,6,6,3,5,,,,
+Lord,12,,6,4,10,10,,
+Mystic,12,6,,,0,10,,
+Necromancer,8,2,4,4,0,10,,
+Paladin,18,,,,25,15,,
+Protector,18,,,,15,25,,
+Scientist,,2,7,7,,,6,10
+Shaman,12,6,2,,0,0,,
+Soldier,14,5,,,10,0,,
+Sorcerer,,2,6,8,,,8,0
+Warden,10,4,,,20,10,,
+# ELEMENT
+Air,4,4,2,,,,,
+Chaos,,,2,2,,,8,10
+Darkness,8,2,,2,,,,
+Fire,4,,4,6,,,,
+Light,,2,4,2,,,4,0
+Nature,12,,2,,,,,
+Order,4,2,1,2,10,,,,
+Techno,8,,2,2,,,1,10
+Water,8,2,2,,,,,
+# WEAPON
+Blunderbuss,,,2,,,,4,5
+Crossbow,,,2,,,,4,5
+Dagger,,2,4,,,,,
+Greataxe,,,6,,,,,
+Greatsword,6,,3,,,,,
+Halberd,,,6,,,,,
+Katana,,2,4,,,,,
+Mystical horn,,,,6,,,,
+Rapier,,2,4,,,,,
+Runic scimitar,,2,4,,,,,
+Scepter,,,,6,,,,
+Sickle,,2,4,,,,,
+Spatha,,2,4,,,,,
+Spear,,,6,,,,,
+Spellbook,,,,6,,,,
+Voodoo doll,,,,6,,,,
+# QUIRK
+Agile,,4,,,,,,
+Blind,,,,4,,,,
+Corporate,8,,,,,,,
+Cult pupil,8,,,,,,,
+Cursed,,,,4,,,,
+Demon slayer,,,4,,,,,
+Desert fighter,,4,,,,,,
+Evil,,,,4,,,,
+Lucky,,,,,,,8,0
+Masked,,,,,,,8,0
+One eyed,,,4,,,,,
+Quick,,4,,,,,,
+Runic,8,,,,,,,
+Sacred,8,,,,,,,
+Strong,,,4,,,,,
+Veteran,,,4,,,,,
+Vigilante,8,,,,,,,
+Zealous,,,,4,,,,
+`;
+
+    const csvData2 = `
+Gene,Vitality,Initiative,Phys. Power,Elem. Power,Phys. Resist.,Elem. Resist.,Crit. Chance,Crit. Multiplier
+# FACTION
+Corporation,4,,1,,,,,
+Cult,,2,,1,,,,
+Empire,,,,,,,4,5
+Guardian,,2,,1,,,,
+Kingdom,4,,1,,,,,
+Tribe,,,3,2,,,,
+Undying,4,,1,,,,,
+# JOB
+Arcanist,,2,2,3,,,,
+Assassin,,2,,,,,5
+Barbarian,,,2,2,,,5
+Druid,6,,,,,,,
+Duelist,2,,2,1,,,,
+Huntsman,,2,,,,,5
+Inquisitor,,2,,1,,,,
+Lord,2,,2,1,,,,
+Mystic,2,2,,,,,,
+Necromancer,2,2,2,2,,,,
+Paladin,6,,,,,,,
+Protector,6,,,,,,,
+Scientist,,2,2,2,,,5
+Shaman,4,,1,,0,0,,
+Soldier,4,,1,,10,0,,
+Sorcerer,,2,2,3,,,5
+Warden,4,,1,,20,10,,
+# ELEMENT
+Air,,2,1,,,,,
+Chaos,,,,,,,4,5
+Darkness,4,,1,,,,,
+Fire,,,2,3,,,,
+Light,,2,2,1,,,2,0
+Nature,4,,1,,,,,
+Order,,2,1,,10,,,,
+Techno,4,,,,,,1
+Water,,2,1,,,,,
+# WEAPON
+Blunderbuss,,,,,,,4,0
+Crossbow,,,,,,,4,0
+Dagger,,2,,,,,,
+Greataxe,,,2,,,,,
+Greatsword,4,,,,,,,
+Halberd,,,2,,,,,
+Katana,,2,,,,,,
+Mystical horn,,,,2,,,,
+Rapier,,2,,,,,,
+Runic scimitar,,2,,,,,,
+Scepter,,,,2,,,,
+Sickle,,2,,,,,,
+Spatha,,2,,,,,,
+Spear,,,2,,,,,
+Spellbook,,,,2,,,,
+Voodoo doll,,,,2,,,,
+# QUIRK
+Agile,,2,,,,,,
+Blind,,,,2,,,,
+Corporate,4,,,,,,,
+Cult pupil,4,,,,,,,
+Cursed,,,,2,,,,
+Demon slayer,,,2,,,,,
+Desert fighter,,2,,,,,,
+Evil,,,,2,,,,
+Lucky,,,,,,,2,0
+Masked,,,,,,,2,0
+One eyed,,,2,,,,,
+Quick,,2,,,,,,
+Runic,4,,,,,,,
+Sacred,4,,,,,,,
+Strong,,,2,,,,,
+Veteran,,,2,,,,,
+Vigilante,4,,,,,,,
+Zealous,,,,2,,,,
+`;
+
+    const csvData3 = `
+Gene,Vitality,Initiative,Phys. Power,Elem. Power,Phys. Resist.,Elem. Resist.,Crit. Chance,Crit. Multiplier
+# FACTION
+Corporation,4,,1,,,,,
+Cult,,2,,1,,,,
+Empire,,,,,,,4,5
+Guardian,,2,,1,,,,
+Kingdom,4,,1,,,,,
+Tribe,,,3,2,,,,
+Undying,4,,1,,,,,
+# JOB
+Arcanist,,2,2,3,,,,
+Assassin,,2,,,,,5
+Barbarian,,,2,2,,,5
+Druid,6,,,,,,,
+Duelist,2,,2,1,,,,
+Huntsman,,2,,,,,5
+Inquisitor,,2,,1,,,,
+Lord,2,,2,1,,,,
+Mystic,2,2,,,,,,
+Necromancer,2,2,2,2,,,,
+Paladin,6,,,,,,,
+Protector,6,,,,,,,
+Scientist,,2,2,2,,,5
+Shaman,4,,1,,0,0,,
+Soldier,4,,1,,10,0,,
+Sorcerer,,2,2,3,,,5
+Warden,4,,1,,20,10,,
+# ELEMENT
+Air,,2,1,,,,,
+Chaos,,,,,,,4,5
+Darkness,4,,1,,,,,
+Fire,,,2,3,,,,
+Light,,2,2,1,,,2,0
+Nature,4,,1,,,,,
+Order,,2,1,,10,,,,
+Techno,4,,,,,,1
+Water,,2,1,,,,,
+# WEAPON
+Blunderbuss,,,,,,,4,0
+Crossbow,,,,,,,4,0
+Dagger,,2,,,,,,
+Greataxe,,,2,,,,,
+Greatsword,4,,,,,,,
+Halberd,,,2,,,,,
+Katana,,2,,,,,,
+Mystical horn,,,,2,,,,
+Rapier,,2,,,,,,
+Runic scimitar,,2,,,,,,
+Scepter,,,,2,,,,
+Sickle,,2,,,,,,
+Spatha,,2,,,,,,
+Spear,,,2,,,,,
+Spellbook,,,,2,,,,
+Voodoo doll,,,,2,,,,
+# QUIRK
+Agile,,2,,,,,,
+Blind,,,,2,,,,
+Corporate,4,,,,,,,
+Cult pupil,4,,,,,,,
+Cursed,,,,2,,,,
+Demon slayer,,,2,,,,,
+Desert fighter,,2,,,,,,
+Evil,,,,2,,,,
+Lucky,,,,,,,2,0
+Masked,,,,,,,2,0
+One eyed,,,2,,,,,
+Quick,,2,,,,,,
+Runic,4,,,,,,,
+Sacred,4,,,,,,,
+Strong,,,2,,,,,
+Veteran,,,2,,,,,
+Vigilante,4,,,,,,,
+Zealous,,,,2,,,,
+`;
+
+    // Store selected genes globally
+    const selectedGenes1 = {};
+    const selectedGenes2 = {};
+    const selectedGenes3 = {}; 
+
+    // Function to parse CSV data into an array of objects, categorized by section
+    function parseCSV(csvString) {
+      const lines = csvString.trim().split('\n');
+      const data = {};
+      let currentCategory = null;
+      const headers = lines[0].split(',');
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith("# ")) {
+          currentCategory = line.substring(2).toUpperCase();
+          data[currentCategory] = [];
+        } else if (currentCategory && line && !line.startsWith("Gene,")) { // Skip header row
+          const values = line.split(',');
+          const obj = {};
+          headers.forEach((header, index) => {
+            obj[header.trim()] = values[index] ? values[index].trim() : "";
+          });
+          data[currentCategory].push(obj);
+        }
+      }
+      return data;
+    }
+
+    // Function to populate gene selection
+    function populateGeneSelection(fileId, category) {
+      const csvData = fileId === 'file1' ? csvData1 : (fileId === 'file2' ? csvData2 : csvData3); 
+      const geneList = document.getElementById(`${fileId}-genes`);
+      geneList.innerHTML = ''; // Clear previous options
+
+      const parsedData = parseCSV(csvData);
+      const genes = parsedData[category] ? parsedData[category].map(row => row.Gene) : [];
+
+      genes.forEach((gene) => {
+        const option = document.createElement('div');
+        option.className = 'gene-option';
+        option.textContent = gene;
+        option.onclick = function() {
+          toggleGeneSelection(fileId, category, gene);
+        };
+        // Check if the gene is already selected
+        const selectedGenes = fileId === 'file1' ? selectedGenes1 : (fileId === 'file2' ? selectedGenes2 : selectedGenes3); 
+        if (selectedGenes[category] && selectedGenes[category].includes(gene)) {
+          option.classList.add('selected');
+        }
+        geneList.appendChild(option);
+      });
+      updateSelectedGenesDisplay(fileId);
+    }
+
+    // Function to toggle gene selection
+    function toggleGeneSelection(fileId, category, gene) {
+      const selectedGenes = fileId === 'file1' ? selectedGenes1 : (fileId === 'file2' ? selectedGenes2 : selectedGenes3); 
+      
+      if (!selectedGenes[category]) {
+        selectedGenes[category] = [];
+      }
+
+      const geneIndex = selectedGenes[category].indexOf(gene);
+      if (geneIndex > -1) {
+        selectedGenes[category].splice(geneIndex, 1);
+      } else {
+        selectedGenes[category] = [gene]; // Allow only one selection per category
+      }
+
+      // Update UI
+      populateGeneSelection(fileId, category);
+    }
+
+    // Event listeners for category selection 
+    document.getElementById('file1-category').addEventListener('change', (event) => {
+      populateGeneSelection('file1', event.target.value);
+    });
+
+    document.getElementById('file2-category').addEventListener('change', (event) => {
+      populateGeneSelection('file2', event.target.value);
+    });
+
+    document.getElementById('file3-category').addEventListener('change', (event) => { 
+      populateGeneSelection('file3', event.target.value);
+    });
+
+    // Function to update the displayed list of selected genes
+    function updateSelectedGenesDisplay(fileId) {
+      const selectedGenesSpan = document.getElementById(`${fileId}-selected-genes`);
+      const selectedGenes = fileId === 'file1' ? selectedGenes1 : (fileId === 'file2' ? selectedGenes2 : selectedGenes3); 
+      const allSelectedGenes = Object.values(selectedGenes).flat();
+      selectedGenesSpan.textContent = allSelectedGenes.length > 0 ? allSelectedGenes.join(', ') : 'None';
+    }
+
+    // Calculate and display summed stats
+    function calculateStats() {
+      const category1 = document.getElementById('file1-category').value;
+      const category2 = document.getElementById('file2-category').value;
+      const category3 = document.getElementById('file3-category').value; 
+
+      const parsedData1 = parseCSV(csvData1);
+      const parsedData2 = parseCSV(csvData2);
+      const parsedData3 = parseCSV(csvData3); 
+
+      const allSelectedGenes1 = Object.values(selectedGenes1).flat();
+      const allSelectedGenes2 = Object.values(selectedGenes2).flat();
+      const allSelectedGenes3 = Object.values(selectedGenes3).flat(); 
+
+      const summedData = sumStats(allSelectedGenes1, allSelectedGenes2, allSelectedGenes3, parsedData1, parsedData2, parsedData3);
+
+      displayResultsTable(summedData);
+    }
+
+    // Function to sum stats for selected genes (modified to handle three datasets)
+    function sumStats(selectedGenes1, selectedGenes2, selectedGenes3, data1, data2, data3) { 
+      const filteredData1 = getFilteredData(selectedGenes1, data1);
+      const filteredData2 = getFilteredData(selectedGenes2, data2);
+      const filteredData3 = getFilteredData(selectedGenes3, data3); 
+
+      const mergedData = {};
+
+      // Function to merge data from a single dataset into mergedData
+      function mergeData(filteredData) {
+        filteredData.forEach(row => {
+          if (mergedData[row.Gene]) {
+            // Sum numeric values if gene exists
+            Object.keys(row).forEach(key => {
+              if (!isNaN(parseFloat(row[key]))) {
+                mergedData[row.Gene][key] = (parseFloat(mergedData[row.Gene][key]) || 0) + parseFloat(row[key]);
+              }
+            });
+          } else {
+            mergedData[row.Gene] = { ...row }; 
+          }
+        });
+      }
+
+      // Merge data from all three datasets
+      mergeData(filteredData1);
+      mergeData(filteredData2);
+      mergeData(filteredData3); 
+
+      const resultArray = Object.values(mergedData);
+
+      if (resultArray.length === 0) {
+        return [];
+      }
+
+      // Calculate total stats
+      const totalStats = {};
+      Object.keys(resultArray[0]).forEach(key => {
+        if (key === 'Gene') {
+          totalStats[key] = 'Total (with base)';
+        } else if (!isNaN(parseFloat(resultArray[0][key]))) {
+          totalStats[key] = resultArray.reduce((sum, row) => sum + (parseFloat(row[key]) || 0), 0);
+        } else {
+          totalStats[key] = ''; // Set non-numeric fields to empty string
+        }
+      });
+
+      // Add base stats to the total
+      totalStats['Vitality'] = (parseFloat(totalStats['Vitality']) || 0) + 40;
+      totalStats['Crit. Multiplier'] = (parseFloat(totalStats['Crit. Multiplier']) || 0) + 60;
+
+      resultArray.push(totalStats);
+
+      return resultArray;
+    }
+
+    // Helper function to filter data based on selected genes
+    function getFilteredData(selectedGenes, data) {
+      const filtered = [];
+      for (const category in data) {
+        data[category].forEach(gene => {
+          if (selectedGenes.includes(gene.Gene)) {
+            filtered.push(gene);
+          }
+        });
+      }
+      return filtered;
+    }
+
+    // Function to display results in a table
+    function displayResultsTable(data) {
+      const resultsTable = document.getElementById('results-table');
+      resultsTable.innerHTML = ''; // Clear previous table
+
+      if (data.length === 0) {
+        resultsTable.innerHTML = '<p style="text-align:center; color:#555;">No genes selected.</p>';
+        return;
+      }
+
+      const table = document.createElement('table');
+      const headerRow = table.insertRow();
+
+      // Define header names
+      const headerNames = ["Gene", "Vitality", "Initiative", "Phys. Power", "Elem. Power", "Phys. Resist.", "Elem. Resist.", "Crit. Chance", "Crit. Multiplier"];
+
+      headerNames.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        headerRow.appendChild(th);
+      });
+
+      data.forEach(row => {
+        const tr = table.insertRow();
+        headerNames.forEach(header => {
+          const td = tr.insertCell();
+          td.textContent = row[header] || '0';
+        });
+      });
+
+      resultsTable.appendChild(table);
+    }
+
+    // Initialize the page
+    window.onload = function() {
+      populateGeneSelection('file1', 'FACTION'); // Default to FACTION
+      populateGeneSelection('file2', 'FACTION'); // Default to FACTION
+      populateGeneSelection('file3', 'FACTION'); // Default to FACTION 
+    };
+  </script>
+
+</body>
+</html>
