@@ -1,586 +1,514 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gene Inheritance Calculator</title>
+    <title>Gene Stats Calculator</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #1e2a38;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            font-family: sans-serif;
         }
-
-        h1, h3 {
-            text-align: center;
-            color: #fff;
-            margin: 0.5rem;
-        }
-
-        h1 {
-            font-size: 2rem;
-        }
-
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .category {
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        select {
-            width: 100%;
-            padding: 0.8rem;
-            margin-bottom: 10px;
-            font-size: 1rem;
-            background-color: #2b4a66;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            outline: none;
-        }
-
-        button {
-            padding: 1rem 2rem;
-            margin: 20px 0;
-            font-size: 1.2rem;
-            background-color: #2b4a66;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #3a5365;
-        }
-
         table {
-            width: 100%;
-            max-width: 800px;
             border-collapse: collapse;
-            margin-top: 20px;
-            background-color: #2a3c4e;
-            color: #fff;
+            width: 100%;
         }
-
-        table, th, td {
-            border: 1px solid #555;
-        }
-
         th, td {
-            padding: 10px;
-            text-align: center;
-            font-size: 1rem;
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
         }
-
-        th {
-            background-color: #2b4a66;
+        .gene-option {
+            display: block;
+            padding: 5px;
+            margin: 2px 0;
+            cursor: pointer;
         }
-
-        td {
-            background-color: #3a5365;
+        .gene-option.selected {
+            background-color: #e0e0e0;
         }
-
-        .title {
-            text-align: center;
-            font-weight: bold;
-            color: #ddd;
-            margin-bottom: 10px;
-            font-size: 1.2rem;
-        }
-
-        .odds-info {
-            text-align: center;
-            margin-bottom: 10px;
-            color: #aaa;
-        }
-
-        .child-section {
-            margin-top: 20px;
-        }
-
-        .child-section h2 {
-            font-size: 1.8rem;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        /* Responsive for smaller screens */
-        @media screen and (max-width: 768px) {
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            h3 {
-                font-size: 1.2rem;
-            }
-
-            select, button {
-                font-size: 1rem;
-            }
-
-            .container {
-                flex-direction: column;
-                align-items: center;
-                padding: 1rem;
-            }
-
-            table, th, td {
-                font-size: 0.9rem;
-                padding: 8px;
-            }
-
-            .category {
-                max-width: 100%;
-                width: 90%;
-            }
-        }
-
-        /* Extra small screens */
-        @media screen and (max-width: 480px) {
-            h1 {
-                font-size: 1.3rem;
-            }
-
-            h3 {
-                font-size: 1.1rem;
-            }
-
-            select, button {
-                font-size: 0.9rem;
-            }
-
-            th, td {
-                font-size: 0.8rem;
-            }
-
-            button {
-                padding: 0.8rem 1.6rem;
-                font-size: 1rem;
-            }
-
-            table {
-                max-width: 90%;
-            }
+        .gene-list {
+            border: 1px solid #ccc;
+            height: 200px;
+            overflow-y: auto;
+            padding: 5px;
         }
     </style>
 </head>
 <body>
 
-    <h1>Gene Inheritance Calculator</h1>
-    <h2>odds used are probably but not yet announced</h2>
+<h1>Gene Stats Calculator</h1>
+<p>Select one gene per category (quirk only if had it):</p>
 
-    <div class="container">
+<div style="display: flex;">
+    <div style="width: 33.33%;">
+        <h2>DOMINANTS GENS</h2>
         <div>
-            <h3>Parent 1</h3>
-            <div class="category">
-                <div class="title">Faction</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent1_faction_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent1_faction_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent1_faction_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
-
-            <div class="category">
-                <div class="title">Job</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent1_job_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent1_job_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent1_job_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
-
-            <div class="category">
-                <div class="title">Element</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent1_element_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent1_element_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent1_element_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
-
-            <div class="category">
-                <div class="title">Weapon</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent1_weapon_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent1_weapon_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent1_weapon_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
-
-            <div class="category">
-                <div class="title">Quirk</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent1_quirk_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent1_quirk_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent1_quirk_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
+            <label for="file1-category">Category:</label>
+            <select id="file1-category">
+                <option value="FACTION">FACTION</option>
+                <option value="JOB">JOB</option>
+                <option value="ELEMENT">ELEMENT</option>
+                <option value="WEAPON">WEAPON</option>
+                <option value="QUIRK">QUIRK</option>
+            </select>
         </div>
-
+        <div id="file1-genes" class="gene-list"></div>
+        <p>Dominants Genes: <span id="file1-selected-genes"></span></p>
+    </div>
+    <div style="width: 33.33%;">
+        <h2>RECESSIVE GENS</h2>
         <div>
-            <h3>Parent 2</h3>
-            <div class="category">
-                <div class="title">Faction</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent2_faction_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent2_faction_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent2_faction_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
-
-            <div class="category">
-                <div class="title">Job</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent2_job_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent2_job_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent2_job_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
-
-            <div class="category">
-                <div class="title">Element</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent2_element_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent2_element_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent2_element_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
-
-            <div class="category">
-                <div class="title">Weapon</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent2_weapon_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent2_weapon_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent2_weapon_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
-
-            <div class="category">
-                <div class="title">Quirk</div>
-                <div class="odds-info">Dominant (0.3 odds)</div>
-                <select id="parent2_quirk_dominant">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Recessive (0.15 odds)</div>
-                <select id="parent2_quirk_recessive">
-                    <option value="">-- No Gene --</option>
-                </select>
-                <div class="odds-info">Minor Recessive (0.05 odds)</div>
-                <select id="parent2_quirk_minor">
-                    <option value="">-- No Gene --</option>
-                </select>
-            </div>
+            <label for="file2-category">Category:</label>
+            <select id="file2-category">
+                <option value="FACTION">FACTION</option>
+                <option value="JOB">JOB</option>
+                <option value="ELEMENT">ELEMENT</option>
+                <option value="WEAPON">WEAPON</option>
+                <option value="QUIRK">QUIRK</option>
+            </select>
         </div>
+        <div id="file2-genes" class="gene-list"></div>
+        <p>Recessive Genes: <span id="file2-selected-genes"></span></p>
     </div>
-
-    <button onclick="calculateInheritance()">Calculate Inheritance</button>
-
-    <table id="results">
-        <thead>
-            <tr>
-                <th>Category</th>
-                <th>Dominant</th>
-                <th>Recessive</th>
-                <th>Minor Recessive</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-    <div class="child-section">
-        <h2>Generate Random Child</h2>
-        <button onclick="generateRandomChild()">Generate Random Child</button>
-        <table id="childResults">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Inherited Gene</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <div style="width: 33.33%;">
+        <h2>MINORS GENS</h2>
+        <div>
+            <label for="file3-category">Category:</label>
+            <select id="file3-category">
+                <option value="FACTION">FACTION</option>
+                <option value="JOB">JOB</option>
+                <option value="ELEMENT">ELEMENT</option>
+                <option value="WEAPON">WEAPON</option>
+                <option value="QUIRK">QUIRK</option>
+            </select>
+        </div>
+        <div id="file3-genes" class="gene-list"></div>
+        <p>Third Genes: <span id="file3-selected-genes"></span></p>
     </div>
+</div>
 
-    <script>
-        const inheritanceOdds = {
-            "Dominant": 0.3,
-            "Recessive": 0.15,
-            "Minor Recessive": 0.05
-        };
+<button onclick="calculateStats()">Calculate Stats</button>
 
-        const geneCategories = {
-            "FACTION": ['Corporation', 'Cult', 'Empire', 'Guardian', 'Kingdom', 'Tribe', 'Undying'],
-            "JOB": ['Arcanist', 'Assassin', 'Barbarian', 'Druid', 'Duelist', 'Huntsman', 'Inquisitor', 'Lord', 'Mystic', 'Necromancer', 'Paladin', 'Protector', 'Scientist', 'Shaman', 'Soldier', 'Sorcerer', 'Warden'],
-            "ELEMENT": ['Air', 'Chaos', 'Darkness', 'Fire', 'Light', 'Nature', 'Order', 'Techno', 'Water'],
-            "WEAPON": ['Blunderbuss', 'Crossbow', 'Dagger', 'Greataxe', 'Greatsword', 'Halberd', 'Katana', 'Mystical horn', 'Rapier', 'Runic scimitar', 'Scepter', 'Sickle', 'Spatha', 'Spear', 'Spellbook', 'Voodoo doll'],
-            "QUIRK": ['Agile', 'Blind', 'Corporate', 'Cult pupil', 'Cursed', 'Demon slayer', 'Desert fighter', 'Evil', 'Lucky', 'Masked', 'One eyed', 'Quick', 'Runic', 'Sacred', 'Strong', 'Veteran', 'Vigilante', 'Zealous']
-        };
+<div id="results-table"></div>
 
-        function calculateInheritance() {
-            const resultsTable = document.getElementById("results").getElementsByTagName("tbody")[0];
-            resultsTable.innerHTML = '';  // Clear previous results
+<script>
+    // CSV data
+    const csvData1 = 
+    `Gene,Vitality,Inititative,Phys. Power,Elem. Power,Phys. Resist.,Elem. Resist.,Crit. Chance,Crit. Multiplier
+    # FACTION
+    Corporation,8,,4,2,,,,
+    Cult,,3,,,,,,
+    Empire,,,2,2,,,8,16
+    Guardian,4,2,,,,,,
+    Kingdom,8,1,,,,,,
+    Tribe,4,,4,4,,,,
+    Undying,12,,,,,,,
+    # JOB
+    Arcanist,,2,6,8,,,4,8
+    Assassin,4,3,4,4,,,,
+    Barbarian,,,6,6,,,12,24
+    Druid,12,2,,,20,20,,
+    Duelist,8,2,4,4,,,,
+    Huntsman,4,2,4,4,,,4,8
+    Inquisitor,6,3,3,3,,,,
+    Lord,10,,4,4,30,30,,
+    Mystic,8,3,,,20,20,,
+    Necromancer,4,1,4,4,20,20,,
+    Paladin,16,,,,40,40,,
+    Protector,18,,,,30,30,,
+    Scientist,,1,7,7,,,6,12
+    Shaman,12,2,,,20,20,,
+    Soldier,12,2,,,20,20,,
+    Sorcerer,,1,6,6,,,8,16
+    Warden,10,2,,,30,30,,
+    # ELEMENT
+    Air,4,2,,,,,,
+    Chaos,,,2,2,,,8,16
+    Darkness,8,1,,,,,,
+    Fire,4,,4,4,,,,
+    Light,,1,2,2,,,4,8
+    Nature,12,,,,,,,
+    Order,4,1,2,2,,,,
+    Techno,8,,2,2,,,,
+    Water,8,1,,,,,,
+    # WEAPON
+    Blunderbuss,,,2,,,,6,5
+    Crossbow,,,2,,,,6,12
+    Dagger,,1,3,,,,,
+    Greataxe,,,5,,,,,
+    Greatsword,6,,2,,,,,
+    Halberd,,,5,,,,,
+    Katana,,1,3,,,,,
+    Mystical horn,,,,5,,,,
+    Rapier,,1,3,,,,,
+    Runic scimitar,,1,3,,,,,
+    Scepter,,,,5,,,,
+    Sickle,,1,3,,,,,
+    Spatha,,1,3,,,,,
+    Spear,,,5,,,,,
+    Spellbook,,,,5,,,,
+    Voodoo doll,,,,5,,,,
+    # QUIRK
+    Agile,,2,,,,,,
+    Blind,,,,4,,,,
+    Corporate,8,,,,,,,
+    Cult pupil,8,,,,,,,
+    Cursed,,,,4,,,,
+    Demon slayer,,,4,,,,,
+    Desert fighter,,2,,,,,,
+    Evil,,,,4,,,,
+    Lucky,,,,,,,4,8
+    Masked,,,,,,,4,8
+    One eyed,,,4,,,,,
+    Quick,,2,,,,,,
+    Runic,8,,,,,,,
+    Sacred,8,,,,,,,
+    Strong,,,4,,,,,
+    Veteran,,,4,,,,,
+    Vigilante,8,,,,,,,
+    Zealous,,,,4,,,,
+    ;`;
+    
+    const csvData2 = 
+    `Gene,Vitality,Inititative,Phys. Power,Elem. Power,Phys. Resist.,Elem. Resist.,Crit. Chance,Crit. Multiplier
+    # FACTION
+    Corporation,4,,1,,,,,
+    Cult,,1,,,,,,
+    Empire,,,,,,,4,8
+    Guardian,,1,,,,,,
+    Kingdom,4,,,,,,,
+    Tribe,,,2,2,,,,
+    Undying,4,,,,,,,
+    # JOB
+    Arcanist,,,2,3,,,,
+    Assassin,,1,,,,,,
+    Barbarian,,,2,2,,,,
+    Druid,4,,,,,,,
+    Duelist,2,,1,1,,,,
+    Huntsman,,1,,,,,,
+    Inquisitor,,1,,,,,,
+    Lord,2,,1,1,,,,
+    Mystic,,1,,,,,,
+    Necromancer,,,2,2,,,,
+    Paladin,4,,,,,,,
+    Protector,4,,,,,,,
+    Scientist,,,2,2,,,,
+    Shaman,4,,,,,,,
+    Soldier,4,,,,,,,
+    Sorcerer,,,2,2,,,,
+    Warden,4,,,,,,,
+    # ELEMENT
+    Air,,1,,,,,,
+    Chaos,,,,,,,4,8
+    Darkness,4,,,,,,,
+    Fire,,,2,2,,,,
+    Light,,,1,1,,,2,4
+    Nature,4,,,,,,,
+    Order,,1,,,,,,
+    Techno,4,,,,,,,
+    Water,,1,,,,,,
+    # WEAPON
+    Blunderbuss,,,,,,,4,8
+    Crossbow,,,,,,,4,8
+    Dagger,,1,,,,,,
+    Greataxe,,,2,,,,,
+    Greatsword,4,,,,,,,
+    Halberd,,,2,,,,,
+    Katana,,1,,,,,,
+    Mystical horn,,,,2,,,,
+    Rapier,,1,,,,,,
+    Runic scimitar,,1,,,,,,
+    Scepter,,,,2,,,,
+    Sickle,,1,,,,,,
+    Spatha,,1,,,,,,
+    Spear,,,2,,,,,
+    Spellbook,,,,2,,,,
+    Voodoo doll,,,,2,,,,
+    # QUIRK
+    Agile,,1,,,,,,
+    Blind,,,,2,,,,
+    Corporate,4,,,,,,,
+    Cult pupil,4,,,,,,,
+    Cursed,,,,2,,,,
+    Demon slayer,,,2,,,,,
+    Desert fighter,,1,,,,,,
+    Evil,,,,2,,,,
+    Lucky,,,,,,,2,4
+    Masked,,,,,,,2,4
+    One eyed,,,2,,,,,
+    Quick,,1,,,,,,
+    Runic,4,,,,,,,
+    Sacred,4,,,,,,,
+    Strong,,,2,,,,,
+    Veteran,,,2,,,,,
+    Vigilante,4,,,,,,,
+    Zealous,,,,2,,,,
+    ;`;
+    
+    const csvData3 = 
+    `Gene,Vitality,Inititative,Phys. Power,Elem. Power,Phys. Resist.,Elem. Resist.,Crit. Chance,Crit. Multiplier
+    # FACTION
+    Corporation,4,,1,,,,,
+    Cult,,1,,,,,,
+    Empire,,,,,,,4,8
+    Guardian,,1,,,,,,
+    Kingdom,4,,,,,,,
+    Tribe,,,2,2,,,,
+    Undying,4,,,,,,,
+    # JOB
+    Arcanist,,,2,3,,,,
+    Assassin,,1,,,,,,
+    Barbarian,,,2,2,,,,
+    Druid,4,,,,,,,
+    Duelist,2,,1,1,,,,
+    Huntsman,,1,,,,,,
+    Inquisitor,,1,,,,,,
+    Lord,2,,1,1,,,,
+    Mystic,,1,,,,,,
+    Necromancer,,,2,2,,,,
+    Paladin,4,,,,,,,
+    Protector,4,,,,,,,
+    Scientist,,,2,2,,,,
+    Shaman,4,,,,,,,
+    Soldier,4,,,,,,,
+    Sorcerer,,,2,2,,,,
+    Warden,4,,,,,,,
+    # ELEMENT
+    Air,,1,,,,,,
+    Chaos,,,,,,,4,8
+    Darkness,4,,,,,,,
+    Fire,,,2,2,,,,
+    Light,,,1,1,,,2,4
+    Nature,4,,,,,,,
+    Order,,1,,,,,,
+    Techno,4,,,,,,,
+    Water,,1,,,,,,
+    # WEAPON
+    Blunderbuss,,,,,,,4,8
+    Crossbow,,,,,,,4,8
+    Dagger,,1,,,,,,
+    Greataxe,,,2,,,,,
+    Greatsword,4,,,,,,,
+    Halberd,,,2,,,,,
+    Katana,,1,,,,,,
+    Mystical horn,,,,2,,,,
+    Rapier,,1,,,,,,
+    Runic scimitar,,1,,,,,,
+    Scepter,,,,2,,,,
+    Sickle,,1,,,,,,
+    Spatha,,1,,,,,,
+    Spear,,,2,,,,,
+    Spellbook,,,,2,,,,
+    Voodoo doll,,,,2,,,,
+    # QUIRK
+    Agile,,1,,,,,,
+    Blind,,,,2,,,,
+    Corporate,4,,,,,,,
+    Cult pupil,4,,,,,,,
+    Cursed,,,,2,,,,
+    Demon slayer,,,2,,,,,
+    Desert fighter,,1,,,,,,
+    Evil,,,,2,,,,
+    Lucky,,,,,,,2,4
+    Masked,,,,,,,2,4
+    One eyed,,,2,,,,,
+    Quick,,1,,,,,,
+    Runic,4,,,,,,,
+    Sacred,4,,,,,,,
+    Strong,,,2,,,,,
+    Veteran,,,2,,,,,
+    Vigilante,4,,,,,,,
+    Zealous,,,,2,,,,
+    ;`;
 
-            const parent1Genes = getSelectedGenes("parent1");
-            const parent2Genes = getSelectedGenes("parent2");
+   
 
-            for (const category in geneCategories) {
-                const row = document.createElement("tr");
+    // Store selected genes globally
+    const selectedGenes1 = [];
+    const selectedGenes2 = [];
+    const selectedGenes3 = []; 
 
-                // Get genes for each type (Dominant, Recessive, Minor Recessive) from both parents
-                const dominantGenes = getCombinedGenes(parent1Genes[category].Dominant, parent2Genes[category].Dominant, inheritanceOdds["Dominant"]);
-                const recessiveGenes = getCombinedGenes(parent1Genes[category].Recessive, parent2Genes[category].Recessive, inheritanceOdds["Recessive"]);
-                const minorRecessiveGenes = getCombinedGenes(parent1Genes[category]["Minor Recessive"], parent2Genes[category]["Minor Recessive"], inheritanceOdds["Minor Recessive"]);
+    // Function to parse CSV data into an array of objects, categorized by section
+    function parseCSV(csvString) {
+        const lines = csvString.trim().split('\n');
+        const data = {};
+        let currentCategory = null;
 
-                // Prepare row content
-                row.innerHTML = `
-                    <td>${category}</td>
-                    <td>${dominantGenes}</td>
-                    <td>${recessiveGenes}</td>
-                    <td>${minorRecessiveGenes}</td>
-                `;
-                resultsTable.appendChild(row);
-            }
-        }
-
-        // Helper function to get combined genes and sum odds for a category
-        function getCombinedGenes(gene1, gene2, odds) {
-            let result = '';
-
-            if (gene1 && gene2 && gene1 === gene2) {
-                // If both parents share the same gene, sum the odds and display it once
-                result = `${gene1} (${(odds * 2).toFixed(2)})`;
-            } else {
-                // Display both genes if they are different
-                if (gene1) result += `${gene1} (${odds.toFixed(2)})<br>`;
-                if (gene2) result += `${gene2} (${odds.toFixed(2)})`;
-            }
-
-            return result;
-        }
-
-        // Get selected genes for both parents
-        function getSelectedGenes(parent) {
-            return {
-                "FACTION": {
-                    "Dominant": document.getElementById(`${parent}_faction_dominant`).value,
-                    "Recessive": document.getElementById(`${parent}_faction_recessive`).value,
-                    "Minor Recessive": document.getElementById(`${parent}_faction_minor`).value
-                },
-                "JOB": {
-                    "Dominant": document.getElementById(`${parent}_job_dominant`).value,
-                    "Recessive": document.getElementById(`${parent}_job_recessive`).value,
-                    "Minor Recessive": document.getElementById(`${parent}_job_minor`).value
-                },
-                "ELEMENT": {
-                    "Dominant": document.getElementById(`${parent}_element_dominant`).value,
-                    "Recessive": document.getElementById(`${parent}_element_recessive`).value,
-                    "Minor Recessive": document.getElementById(`${parent}_element_minor`).value
-                },
-                "WEAPON": {
-                    "Dominant": document.getElementById(`${parent}_weapon_dominant`).value,
-                    "Recessive": document.getElementById(`${parent}_weapon_recessive`).value,
-                    "Minor Recessive": document.getElementById(`${parent}_weapon_minor`).value
-                },
-                "QUIRK": {
-                    "Dominant": document.getElementById(`${parent}_quirk_dominant`).value,
-                    "Recessive": document.getElementById(`${parent}_quirk_recessive`).value,
-                    "Minor Recessive": document.getElementById(`${parent}_quirk_minor`).value
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith("# ")) {
+                currentCategory = line.substring(2);
+                data[currentCategory] = [];
+            } else if (currentCategory && line && !line.startsWith("Gene,")) { // Skip header row
+                const values = line.split(',');
+                const obj = {};
+                for (let j = 0; j < values.length; j++) {
+                    // Convert empty strings to 0 for numeric columns
+                    obj[j] = values[j] === '' ? 0 : values[j];
                 }
+                data[currentCategory].push(obj);
+            }
+        }
+        return data;
+    }
+
+    // Function to populate gene selection
+    function populateGeneSelection(fileId, category) {
+        const csvData = fileId === 'file1' ? csvData1 : (fileId === 'file2' ? csvData2 : csvData3); 
+        const geneList = document.getElementById(`${fileId}-genes`);
+        geneList.innerHTML = ''; // Clear previous options
+
+        const genes = parseCSV(csvData)[category].map(row => row[0]);
+         
+        genes.forEach((gene) => {
+            const option = document.createElement('div');
+            option.className = 'gene-option';
+            option.textContent = gene;
+            option.onclick = function() {
+                this.classList.toggle('selected');
+                updateSelectedGenes(fileId, category);
             };
-        }
-
-        // Corrected random child generation based on both parents' combined odds
-        function generateRandomChild() {
-            const childTable = document.getElementById("childResults").getElementsByTagName("tbody")[0];
-            childTable.innerHTML = '';  // Clear previous results
-
-            const parent1Genes = getSelectedGenes("parent1");
-            const parent2Genes = getSelectedGenes("parent2");
-
-            for (const category in geneCategories) {
-                const row = document.createElement("tr");
-
-                // Get the combined odds for Dominant, Recessive, and Minor Recessive genes
-                const combinedGenesWithOdds = calculateCombinedOdds(parent1Genes[category], parent2Genes[category], category);
-
-                // If there are no genes selected in both parents, continue to the next category
-                if (combinedGenesWithOdds.length === 0) {
-                    row.innerHTML = `
-                        <td>${category}</td>
-                        <td>No Gene Selected</td>
-                    `;
-                    childTable.appendChild(row);
-                    continue;
-                }
-
-                // Calculate the total combined odds to be used for random selection
-                const totalOdds = combinedGenesWithOdds.reduce((sum, geneObj) => sum + geneObj.odds, 0);
-
-                // Determine which gene is inherited by the child based on combined odds
-                const selectedGene = determineChildGene(combinedGenesWithOdds, totalOdds);
-
-                // Display the child gene for each category
-                row.innerHTML = `
-                    <td>${category}</td>
-                    <td>${selectedGene}</td>
-                `;
-                childTable.appendChild(row);
+            // Check if the gene is already selected
+            const selectedGenes = fileId === 'file1' ? selectedGenes1 : (fileId === 'file2' ? selectedGenes2 : selectedGenes3); 
+            if (selectedGenes[category] && selectedGenes[category].includes(gene)) {
+                option.classList.add('selected');
             }
-        }
+            geneList.appendChild(option);
+        });
+        updateSelectedGenesDisplay(fileId);
+    }
 
-        // Helper function to calculate combined odds for both parents' genes
-        function calculateCombinedOdds(parent1Genes, parent2Genes, category) {
-            const combinedOdds = [];
-            const categoryGenes = geneCategories[category];
-            const dominanceLevels = ["Dominant", "Recessive", "Minor Recessive"];
+    // Function to update selected genes
+    function updateSelectedGenes(fileId, category) {
+        const geneList = document.getElementById(`${fileId}-genes`);
+        const selectedGenes = fileId === 'file1' ? selectedGenes1 : (fileId === 'file2' ? selectedGenes2 : selectedGenes3); 
+        selectedGenes[category] = [];
+        geneList.querySelectorAll('.gene-option.selected').forEach(option => {
+            selectedGenes[category].push(option.textContent);
+        });
+        updateSelectedGenesDisplay(fileId);
+    }
 
-            categoryGenes.forEach(gene => {
-                let odds = 0;
-                dominanceLevels.forEach(level => {
-                    if (gene === parent1Genes[level]) odds += inheritanceOdds[level];
-                    if (gene === parent2Genes[level]) odds += inheritanceOdds[level];
-                });
+    // Event listeners for category selection 
+    document.getElementById('file1-category').addEventListener('change', (event) => {
+        populateGeneSelection('file1', event.target.value);
+    });
 
-                if (odds > 0) {
-                    combinedOdds.push({ gene, odds });
+    document.getElementById('file2-category').addEventListener('change', (event) => {
+        populateGeneSelection('file2', event.target.value);
+    });
+
+    document.getElementById('file3-category').addEventListener('change', (event) => { 
+        populateGeneSelection('file3', event.target.value);
+    });
+
+    // Function to update the displayed list of selected genes
+    function updateSelectedGenesDisplay(fileId) {
+        const selectedGenesSpan = document.getElementById(`${fileId}-selected-genes`);
+        const selectedGenes = fileId === 'file1' ? selectedGenes1 : (fileId === 'file2' ? selectedGenes2 : selectedGenes3); 
+        const allSelectedGenes = Object.values(selectedGenes).flat();
+        selectedGenesSpan.textContent = allSelectedGenes.join(', ');
+    }
+
+    // Calculate and display summed stats
+    function calculateStats() {
+        const category1 = document.getElementById('file1-category').value;
+        const category2 = document.getElementById('file2-category').value;
+        const category3 = document.getElementById('file3-category').value; 
+
+        const parsedData1 = parseCSV(csvData1);
+        const parsedData2 = parseCSV(csvData2);
+        const parsedData3 = parseCSV(csvData3); 
+
+        const allSelectedGenes1 = Object.values(selectedGenes1).flat();
+        const allSelectedGenes2 = Object.values(selectedGenes2).flat();
+        const allSelectedGenes3 = Object.values(selectedGenes3).flat(); 
+
+        const summedData = sumStats(allSelectedGenes1, allSelectedGenes2, allSelectedGenes3, parsedData1, parsedData2, parsedData3);
+
+        displayResultsTable(summedData);
+    }
+
+    // Function to sum stats for selected genes (modified to handle three datasets)
+    function sumStats(selectedGenes1, selectedGenes2, selectedGenes3, data1, data2, data3) { 
+        const filteredData1 = Object.values(data1).flat().filter(row => selectedGenes1.includes(row[0]));
+        const filteredData2 = Object.values(data2).flat().filter(row => selectedGenes2.includes(row[0]));
+        const filteredData3 = Object.values(data3).flat().filter(row => selectedGenes3.includes(row[0])); 
+
+        const mergedData = {};
+
+        // Function to merge data from a single dataset into mergedData
+        function mergeData(filteredData) {
+            filteredData.forEach(row => {
+                if (mergedData[row[0]]) {
+                    // Sum numeric values if gene exists
+                    Object.keys(row).forEach(key => {
+                        if (!isNaN(parseFloat(row[key]))) {
+                            mergedData[row[0]][key] = (parseFloat(mergedData[row[0]][key]) || 0) + parseFloat(row[key]);
+                        }
+                    });
+                } else {
+                    mergedData[row[0]] = { ...row }; 
                 }
             });
-
-            return combinedOdds;
         }
 
-        // Determine which gene the child inherits based on combined odds
-        function determineChildGene(combinedGenesWithOdds, totalOdds) {
-            const randomValue = Math.random() * totalOdds;
-            let cumulativeOdds = 0;
+        // Merge data from all three datasets
+        mergeData(filteredData1);
+        mergeData(filteredData2);
+        mergeData(filteredData3); 
 
-            for (const geneObj of combinedGenesWithOdds) {
-                cumulativeOdds += geneObj.odds;
-                if (randomValue <= cumulativeOdds) {
-                    return geneObj.gene;
-                }
+        const resultArray = Object.values(mergedData);
+
+        // Calculate total stats
+        const totalStats = {};
+        Object.keys(resultArray[0]).forEach(key => {
+            if (!isNaN(parseFloat(resultArray[0][key]))) {
+                totalStats[key] = resultArray.reduce((sum, row) => sum + parseFloat(row[key]), 0);
+            } else {
+                totalStats[key] = ''; // Set non-numeric fields to empty string
             }
+        });
 
-            return combinedGenesWithOdds[combinedGenesWithOdds.length - 1].gene;  // Fallback, should not happen
-        }
+        // Add base stats to the total
+        totalStats[1] = parseFloat(totalStats[1]) + 40; // Add 40 to Vitality
+        totalStats[8] = parseFloat(totalStats[8]) + 60; // Add 60 to Crit. Multiplier
 
-        // Populate dropdowns with gene options on page load
-        window.onload = populateDropdowns;
+        totalStats[0] = 'Total (with base)';
+        resultArray.push(totalStats);
 
-        function populateDropdowns() {
-            const categories = Object.keys(geneCategories);
-            categories.forEach(category => {
-                const genes = geneCategories[category];
-                const parent1DominantSelect = document.getElementById(`parent1_${category.toLowerCase()}_dominant`);
-                const parent1RecessiveSelect = document.getElementById(`parent1_${category.toLowerCase()}_recessive`);
-                const parent1MinorSelect = document.getElementById(`parent1_${category.toLowerCase()}_minor`);
+        return resultArray;
+    }
 
-                const parent2DominantSelect = document.getElementById(`parent2_${category.toLowerCase()}_dominant`);
-                const parent2RecessiveSelect = document.getElementById(`parent2_${category.toLowerCase()}_recessive`);
-                const parent2MinorSelect = document.getElementById(`parent2_${category.toLowerCase()}_minor`);
+    // Function to display results in a table
+    function displayResultsTable(data) {
+        const resultsTable = document.getElementById('results-table');
+        resultsTable.innerHTML = ''; // Clear previous table
 
-                genes.forEach(gene => {
-                    const option1 = document.createElement('option');
-                    option1.value = gene;
-                    option1.text = gene;
+        const table = document.createElement('table');
+        const headerRow = table.insertRow();
+        // Assuming the first row of data contains header names
+        Object.keys(data[0]).forEach((key, index) => {
+            const headerCell = headerRow.insertCell();
+            // Map numeric index to header name (adjust as needed)
+            const headerNames = ["Gene", "Vitality", "Initiative", "Phys. Power", "Elem. Power", "Phys. Resist.", "Elem. Resist.", "Crit. Chance", "Crit. Multiplier"];
+            headerCell.textContent = headerNames[index] || key;
+        });
 
-                    const option2 = option1.cloneNode(true);
-                    const option3 = option1.cloneNode(true);
-                    const option4 = option1.cloneNode(true);
-                    const option5 = option1.cloneNode(true);
-                    const option6 = option1.cloneNode(true);
-
-                    parent1DominantSelect.add(option1);
-                    parent1RecessiveSelect.add(option2);
-                    parent1MinorSelect.add(option3);
-
-                    parent2DominantSelect.add(option4);
-                    parent2RecessiveSelect.add(option5);
-                    parent2MinorSelect.add(option6);
-                });
+        data.forEach(row => {
+            const dataRow = table.insertRow();
+            Object.values(row).forEach(value => {
+                const dataCell = dataRow.insertCell();
+                dataCell.textContent = value;
             });
-        }
-    </script>
+        });
+
+        resultsTable.appendChild(table);
+    }
+
+    // Initialize the page
+    populateGeneSelection('file1', 'FACTION'); // Default to FACTION
+    populateGeneSelection('file2', 'FACTION'); // Default to FACTION
+    populateGeneSelection('file3', 'FACTION'); // Default to FACTION 
+</script>
 
 </body>
 </html>
