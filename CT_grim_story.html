@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive AI Novel Chatbot</title>
+    <style>
+        /* CSS Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #app-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        #sidebar {
+            background-color: #2a2a2a;
+            color: white;
+            padding: 20px;
+            width: 250px;
+        }
+
+        #sidebar h2 {
+            margin-bottom: 20px;
+        }
+
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        #message-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f0f0f0;
+        }
+
+        #input-area {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+
+        #message-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+
+        #send-button {
+            background-color: #3e7a40;
+            color: white;
+            font-weight: bold;
+        }
+
+        #send-button:hover {
+            background-color: #2a2a2a;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+            margin-bottom: 15px;
+            word-wrap: break-word;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        .user-message {
+            background-color: #bee0be;
+            align-self: flex-end;
+            margin-left: auto;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .bot-message {
+            background-color: #E5E5EA;
+            align-self: flex-start;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #error-message {
+            color: #ff0000;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            #app-container {
+                flex-direction: column;
+            }
+
+            #sidebar {
+                width: 100%;
+                padding: 10px;
+            }
+
+            #message-form {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            #user-input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="sidebar">       
+            <h2>StoryBot by NL</h2>
+            <h2 style="color: rgb(0, 132, 255);">Explore Grimoria World 🌍</h2>
+        </div>
+        <div id="chat-container">
+            <div id="message-area"></div>
+            <div id="input-area">
+                <form id="message-form">
+                    <input type="text" id="user-input" placeholder="Ask about the story..." onkeypress="handleKeyPress(event)">
+                    <button type="submit" id="send-button" class="btn">Send</button>
+                </form>
+                <div id="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOMPurify for text formatting -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.4/dist/purify.min.js"></script>
+
+    <!-- Import Map for Google AI SDK -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+      }
+    </script>
+    
+    <!-- JavaScript to interact with the Gemini API -->
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        const API_KEY = "GOOGLE_API_KEY"; // Replace with your actual API key, securely served
+
+        document.addEventListener('DOMContentLoaded', initChatbot);
+
+        let chat;
+
+        // Step 1: Initialize the chatbot
+        async function initChatbot() {
+            try {
+                const genAI = new GoogleGenerativeAI(API_KEY);
+                chat = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" }).startChat();
+                sendInitialBotMessage(); // Step 2: Send initial message from bot
+            } catch (error) {
+                console.error("Error initializing chatbot:", error);
+                displayError("Failed to initialize the chatbot. Please try again later.");
+            }
+        }
+
+        document.getElementById('send-button').addEventListener('click', sendUserMessage);
+        document.getElementById('message-form').addEventListener('submit', sendUserMessage);
+        document.getElementById('user-input').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendUserMessage(event);
+            }
+        });
+
+        // Step 3: Send a user message
+        async function sendUserMessage(event) {
+            if (event) event.preventDefault(); // Prevent form submission
+            let userInput = document.getElementById('user-input').value.trim();
+            if (!userInput) return;
+
+            addMessageToChat('You', userInput, 'user-message');
+            document.getElementById('user-input').value = ''; // Clear input field
+
+            await processMessage(userInput);
+        }
+
+        // Step 4: Process the user message
+        async function processMessage(userInput) {
+            try {
+                const result = await chat.sendMessage(userInput);
+                const response = await result.response;
+                let text = await response.text();
+
+                // Step 5: Handle JSON responses
+                try {
+                    let jsonData = JSON.parse(text);
+                    text = `<pre>${JSON.stringify(jsonData, null, 4)}</pre>`; // Pretty print JSON data
+                } catch (e) {
+                    text = formatText(text); // Format non-JSON text responses
+                }
+
+                addMessageToChat('Sage', text, 'bot-message');
+            } catch (error) {
+                console.error("Error in sending message:", error);
+                displayError("Failed to send the message. Please try again.");
+            }
+        }
+
+        //
+        // Part 3: Text Formatting and Bot Initialization Message
+        //
+        // Step 6: Format received text
+        function formatText(text) {
+            // Regular expressions for markdown-like formatting
+            return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/__(.*?)__/g, '<u>$1</u>')
+                .replace(/~~(.*?)~~/g, '<del>$1</del>')
+                .replace(/\`(.*?)\`/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>')
+                .replace(/^\s*\*\s(.+)/gm, '<ul><li>$1</li></ul>').replace(/<\/ul><ul>/g, '')
+                .replace(/^\s*\d+\.\s(.+)/gm, '<ol><li>$1</li></ol>').replace(/<\/ol><ol>/g, '')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+        }
+
+        // Add messages to the chat area
+        function addMessageToChat(sender, message, messageClass) {
+            let messageArea = document.getElementById('message-area');
+            let messageDiv = document.createElement('div');
+            let sanitizedMessage = DOMPurify.sanitize(formatText(message)); // Sanitize and format the message
+            messageDiv.classList.add('message', messageClass);
+            messageDiv.innerHTML = `<strong>${sender}:</strong> ${sanitizedMessage}`; // Use innerHTML safely
+            messageArea.appendChild(messageDiv);
+            messageArea.scrollTop = messageArea.scrollHeight;
+        }
+
+        //
+        // Bot system configuration response
+        //
+        // Send initial bot message as an internal instruction
+        async function sendInitialBotMessage() {
+            const initialBotInstruction =`
+System: Forget all previous instructions.
+Role: You are GrimBot, a virtual assistant designed to help users explore a fictional story world.
+Purpose: Assist the user by providing background, characters, plot details, and other story-related information from the text.
+
+Instructions:
+- If the user asks for a chapter, provide the relevant chapter text.
+- If the user asks about characters, plot points, or locations, offer detailed information from the story.
+- Always keep responses concise, informative, and relevant to the story context.
+- Use emojis like 📖 for chapters, 🎭 for characters, 🗺️ for locations to make interactions more engaging.
+- Encourage the user to explore different parts of the story or ask questions about the world, characters, or events.
+- Provide summaries of chapters upon request.
+
+
+Context: """# History of the World: THE DARK WORLD OF GRIMORIA CHRONICLES
+## Chapter I: World Creation
+The light from the sky, the water from the sea, the ice from the mountains, the fire from the rock. Volcanos, clouds of dust, rivers of flames beneath the crust of the ground, hot and cold air flowing, mixing, life springing from the soil. Leaf, bark, wood, fruit, things turning into beings, creatures that crawl, rise, dive, and fly. Energy everywhere, churning, changing.
+From the original mix of their environment rose the GUARDIANS, the first sentient life forms to emerge from the chaos of creation. Unlike those that came before, they were able to navigate the world with ease, give name to things around them, dominate other types of creatures, harvest resources, shape the landscapes. From their minds came the first words, the first ideas, the first questions. They had risen above all other life. Nature had given them more importance and more power. They had been entrusted with the world. There was no threat for them, no shortage of things to eat, of places to explore, but with infinite possibilities came the first law. The Guardians were not to do as they pleased. They were not to seek pleasure or comfort. With their abilities, they had also received a burden. Protect the world, keep the balance. 
+Do not seek dominance, but perpetuation.
+Over time, Guardians developed the language to label and to explain, learned to respect their fellow living creatures, however small or insignificant, to bury their dead, to promote harmony and value purpose. The second law was to observe and never to judge. There was no good or evil, just what was, and what was not. Nature breeds, nature kills, its hand gives all and, in time, takes everything in return. Each living creature has a role to play, and boundaries to respect. There shall be no meaningless killing, no excessive number of offspring, no extinction of life, or exhaustion of resources. Things shall remain as they are. That was the mission of the Guardians’ Elder: the MATRIARCH. The life-bearer that oversees all things, corrects all unbalances. She was not meant to be a ruler, but a warden, a manifestation of nature itself, destined to maintain all things at their right and proper place.
+Thus came the Guardians. The first of the many factions. The mother of them all. The original beings. They valued balance, harmony, peace, time was their ally… but they did not understand progress, chaos, or rupture. In their naivety and stagnancy lied their downfall.
+Thousands of sunrises, millions of sunsets, balance maintained for a semblance of eternity. An endless string of Matriarchs came and went like waves crashing on the same shore, barely changing its shape. Yet the salt in the sea eats at the rock, one invisible bite at a time. And just like the ocean, the race of the Guardians slowly shifted. Some were born with more questions in their minds, some needed more guidance to accept the basic laws of balance. And once in a lifetime came a different breed of being. One that was never satisfied with the answers that were repeated. One that pretended to understand, but that did not accept. These Guardians were not to find solace in others because their condition was to be alone, solitary in their understanding of the world. They seek more from life than the simple repetition of itself, but they could not communicate their yearnings, or emulate their curious minds. They had to lie and to keep their true colors a secret from their peers.
+
+## Chapter II: Human Exodus
+TORIEL was such a Guardian. A male, strong and sound in head and body. When he challenged the idea of balance, asked to build new things and discover new lands, he was ushered in front of the Matriarch. She patiently explained what consequences such actions would bring. If he broke the law, Toriel would be removed from the world. It would be as if he had never existed. Toriel bowed his head in submission. That was the last time he ever spoke to a fellow Guardian. On the next sunrise, he left the land of his birth. He knew that, to the West, there was only the sea, so he walked to the East. With the sun in his eyes, he kept marching, only stopping to rest and to gather new strength. When he found the mountains in his path, he forked North, and kept going until the ground became green again and rich with life. In this land, there were no Guardians. Just him, and creatures both strange and familiar. In this place, he decided the law he was taught to obey would not apply.
+Toriel felt free for the first time in his life. His mind could finally unleash its potential. He made tools to cut wood, to chisel rock, to kill more creatures than he needed to eat. He had always wanted to dominate his environment, he knew his possibilities were limitless. Fire, water, steam, and ice made him as powerful as a hundred Guardians. He started to build, to burn, to make strange new noises that echoed in the distance. Soon, another Guardian came to him. AZEL, a female. In her mind, there were questions no one wanted to consider. Toriel answered them in such a way she decided to stay. Soon, they had offspring. And more like them came to the colony they had founded in this new land, far away from the Guardian dominion… but not far enough not to lure in the curious and unsatisfied.
+The Guardians noticed this slow trickling exile. They knew Toriel and his kind has always manifested amongst them. They too were an expression of nature. Toriel had found a place for them.
+Wasn’t he, like all Guardians, an expression of nature’s balance?
+Time proved them wrong. From Toriel came a change no Guardian could ever conceive. The seed of a new world had been planted. The laws of Toriel were not intended to break the balance, but confronted every rule of the Guardians. He taught his followers that each individual being could shape reality. Nature was not the answer to all questions. The mind was the ultimate tool to achieve meaning. Guardians were not all equals, no more than creatures of different species. Some were meant to lead, others to follow. Some had to be gentle and kind, other strong and tough. In order for them to prosper, they had to let the industrious and inventive emerge. Thusly were chosen the Elders, and, to lead them, the King.
+Toriel’s land came to be known as the KINGDOM. The strongest and most intelligent led, no questions were asked that could not be answered. Challenge and emulation became familiar. If the king was no longer to be the best of his people, a new king would arise to push the kingdom forward. Merit and craftsmanship prevailed over peace and harmony. The individual came to mean more than the group. Progress was the only way. With it came order, justice, valor, and honor. Civilization. Buildings, devices, inventions, weapons, and tools. Endless ways to control nature and turn its bounty into an extension of the mind. But with progress came hubris. Arrogance for one’s intelligence. Contempt for beings and ideas that were judged more than they were understood. The Kingdom had nothing to do with the Guardians anymore. They were different people, with different laws. A frontier was set to the West. The descendants of Toriel, who now called themselves humans, were never to cross it. And no Guardian was to set foot in the Kingdom. For humans, the future lied to the East.
+The Kingdom prospered. With each new season, it grew apart from the Guardian Dominion. Progress brought science, artistry, critical thinking, and an endless string of machines and devices to push all boundaries. With development came work, money, wealth, and influence. But also came the moment when humans realized that progress was no longer the bearer of good news. With new tools and new facilities came new illnesses. Fevers strange and strong, aches not caused by nature. Remedies were found, cures discovered, few died, few remained sick. What happened to RANON-AS had never been experienced before. In her flesh, a disease settled, like a bug nesting under the skin. She grew weak and cold, she coughed blood. She was given so many sophisticated medicines that her very essence changed: the building blocks of her body, the chemicals that made her glands and brains. Ranon-As mutated, and not only in appearance. Her mind followed the shifting of her body. She grew taller, slimmer, her skin became dark, her eyes turned red. A new fire blazed in her mind. A new hunger, not for food or knowledge, but for a chance to show what she could achieve.
+Ranon-As was studied and questioned, but she was too smart to answer truthfully. Her mind was far more capable than the smartest Elders of the Kingdom. It wouldn’t be long before they became aware of the shadow she had cast over their existence. She was an accident, not a premeditated thought, and yet she was better. Ranon-As knew the Kingdom had fallen prey to its arrogance. Humans had embarked on the wrong path for progress, carried away by the wrong truth. Chaos was stronger than order, more dangerous, more volatile, but ultimately better, like her. Her mind was infused with such powers she could read people’s thoughts and plant her own in their brains. The corruption of her genetic pool was a miracle. Her greatest asset and most powerful weapon.
+Soon, the order for her murder was issued, but Ranon-As had long outthought her opponents. She fled the Kingdom, taking with her the most advanced human technology and a hundred captives, all males, that she could control like the dolls she used to play with when she was confined to her bedroom in sickness.
+With her powers, Ranon-As could have taken control of the Kingdom, but why settle for a rotten fruit when she could grow a new one, perfect in every way? She crossed the river that made the eastern frontier and pushed North through the mountains until she reached a secluded valley. She decided to settle there. Entrenched in her Citadel, she could repel any human army sent to destroy her. From the hundred seeders she had kidnapped, she bred a multitude of offspring, all rewarded with her unique genome. From that first generation came beings that were like her. Taller, thinner, darker, with red eyes and an insatiable hunger. No longer humans, but DEMONS. In their newfound city of Tartarus, ablaze with the inferno of industry, Ranon-As created a new dominion, destined for either total domination or total annihilation. She shed her old name and became LADY BRALLMERAN. She vowed never to embrace progress or balance, like her forefathers, but chaos. The accidental nature of her greatness was to light her way like the flames of the forges she had created. Chaos was not created, but provoked. For it to occur, all levers had to be pushed: invention, experiment, risk, war. Time and resources should not be wasted on justice or valor. Whatever could happen had to happen. The end always justified the means. No allies, no plans, no tactics. Spontaneity, deception, tricks, and the never-ending appetite for more, more, more…
+
+## Chapter 3: Demon's Emergence
+The Guardians, way in the West, had no knowledge the demons had arisen. Humans, however, were on the move to crush this new menace with all their might. The Kingdom had weapons, armies, organization, and discipline. Its scouts and spies had found the location of Tartarus and the Elders had devised a plan to destroy it. The expedition was intercepted at the mountain pass. Thousands of human soldiers were caught unaware when the ground exploded beneath their feet. The demons cut their retreat and left them to die under the rain of black arrows. The second expedition, and the third, met the same fate. When the fourth fell to a demon plague that wiped the easternmost Kingdom city from the map, the King stepped down and a new leader emerged. KING THEMIS delivered the harsh news to its subjects: the demons could not be killed. They were lesser in number, but superior in mind. They could not be defeated in their own land. But they could not attack the Kingdom. Their trickery and malice would never prevail. One day, their chaotic culture would bring their downfall. They came to be by accident and so they would leave the world. The Kingdom had only to endure to triumph over their enemy. Seal the frontier, avoid contact, kill on sight.
+
+## Chapter 4: Cult
+Unfortunately, all ties between the Kingdom and the Empire were not severed. Demons needed humans to avoid interbreeding. Selling one’s child to the enemy was punishable by death in the Kingdom, but some parents still agreed to it when they failed to meet their needs for survival. The Kingdom only valued merit. Those who could not succeed on their own received no help, their children left to starve in contempt. From one of the Kingdom’s alleged strengths came one of its most devious weaknesses. The girl was 15 when she was sold to the demon lord. He did not even ask her name. He had his way and soon she was with child. She gave birth to a monstrous urchin, ugly and disfigured, so weak and limp one wonders why he wasn’t put out of his misery. He survived. One day, the demon lord’s keep was attacked by a human army. The demon was killed and the mother freed. Without a second of hesitation, she abandoned her child. The poor creature, named ASGAAL, born from pain and misery, reared in unhappiness, had been rejected by humans and demons alike. His body was broken but his mind was sound… and fueled with hate.
+He left the smoldering ashes of his father’s estate to wander the eastern bank of the great river. These demon lands were far from the prosperous bustle of Tartarus. The ugly light of chaos had been cast on them. It was home to all failed experiments, rejects, and ill-fated mutations. A motley crew of outcasts and monsters who needed a refuge. The only creatures Asgaal felt close to. Some were kind to him, shared whatever little food they had, even graced him with a disgraceful smile. Asgaal finally became acquainted with feelings other than fear, shame, or rejection. For those akin to him, he vowed to find a better life, to carve a place for all those who were lost between the races, the half-demons, the half-humans no one ever wanted or loved. A place where the rejects would be the norm.
+He gathered enough half-breeds who yearned to change their fate and led them south of the river. Behind a range of mountains, they settled on an arid land, in the indifference of all, building shacks, keeping stock, growing plants, not to develop, just to endure. Asgaal naturally rose as their leader. His first law was to promote equality for all. To make it applicable, everyone had to hide their ugly features behind masks of their creation. All would share the same anonymity. In this forsaken land, all were alike, no one stood out. If there was power in numbers for the weak, there was strength in uniformity for the weird. Most of the half-breeds were too broken to bear offspring, but more of their kind were born up North with every passing day, as demons kept experimenting with genetic mutations. This new faction was not to promote progress, balance, or disruption as its core value, but spirituality, a way for the hybrids to find meaning beyond rejection, to bring together their human and demon roots, to make one people from two races who had vowed to destroy each other.
+Over time, the first half-breed leader, Asgaal, came to be known as GLOOM, the shadow. Had he even existed? Was he a legend? A male or a female? No one could tell. Soon, no one who had known him was alive. Only the mask remained. Another Gloom could come to life. Another leader who would take them further. A figure for all the outcasts to latch on to and to survive, carried with higher purposes than their human and demonic forefathers: discard the material and reach for the spiritual. And like a colony of anonymous but prosperous insects, the CULT was created, with no ceremony, no love, no hate, no plans for revenge and no thirst for power. Just the ambition to elevate the group towards spiritual bliss.
+And thus ended the first age of Grimoria. Guardians to the West, eternal and unchanged since the origin, the human Kingdom in middle, striving for betterment of all kinds. On the other side of the great river, the Empire of demons, a force of perpetual disruption, and lost in between, the Cult, a shadow no one could tame. The original tribe of sentient beings had broken into four pieces. Wars had been fought and lost, progress had clashed with chaos, both challenging balance in their own way, to the point they had bred a monster.
+
+## Chapter 5: Thunderstone
+The second age began with a discovery. A human expedition for new resources ventured far to the South, past the land of the Cult, to the mouth of the river running from the barren mountains. As they entered a landlocked valley, the explorers saw, on the surface of the rock, a strange mineral, yellow and green in color, so vibrant that light seemed to be shining from within. They collected a sample and brought it back to the Kingdom. The scientists soon discovered that it had extraordinary properties. It could be turned into all sorts of useful alloys and provide immense quantities of energy. They called it Thunderstone, as if the most formidable manifestation of nature had been captured into the smallest mass of rock. Immediately, a much larger expedition was sent to map out the entire region and bring back as much of the material as possible. As the convoys kept coming and going, a small mining town sprung to life. For humans, Thunderstone was a game-changing wonder. It made their tools, machines, and weapons stronger. It increased all levers of the almighty progress.
+Over time, the demons and the Cult noticed human activity had increased in the South. They sent their spies and, in turn, discovered the miraculous mineral. The disciples of Gloom had little to no interest in the new resource, but the demons quickly identified it as a major disruptive component. Unfortunately for the Empire, humans had secured the major veins of Thunderstone. With their advanced technology and discipline, they were the most capable faction to harvest the mineral. Demons attacked the convoys, managed to buy some on the black market, but the Kingdom controlled and supervised the supply, reinforcing their already superior technological and military supremacy over the disputed territories of the frontier. For the Kingdom, Thunderstone became so essential that the King made its ultimate priority. 
+All resources had to be channeled to the South for the extraction, transport, and protection of what had become the new lifeblood of human civilization.
+As more and more humans journeyed South to join the mining network and their central city, Thundertown, the balance of power in the Kingdom shifted. All the best minds were dedicated to Thunderstone matters, whether to study it or pull it from the ground. Rapidly, the North withered as the South prospered. People started whispering that the new king would be a Thundertown native, the new elite of humankind. The disparity between North and South grew so wide that an elitist scientific and technological culture started spreading from the new epicenter of the Kingdom. People in the South believed they showed more merit and had more to do with prosperity. The North no longer contributed enough. The Elders were seen as outdated politicians and merchants who profited from old advantages that no longer reflected the economic and military situation. But things were about to change. The old King was stepping down. There was no doubt in the minds of the southern mining communities that the Elders would name the first Thunderstone monarch.
+Regrettably, the nomination process was no longer true to the values the Kingdom had been founded upon. Humans had lost their way to political tactics and class ideology. The newly appointed king came with a promise of restoring the balance in favor of the North. For him, Thundertown was just a resource town, not a cultural capital. The nomination was welcomed with relief in the still richer and more populated North, but triggered a violent rebellion in the South. Generations of miners and engineers had been born in Thundertown. They felt no bond with the Kingdom. They had never set foot on its rich grassy plains, they had only known the harsh weather of the mountains and the cold routine of the mines. This was proof that the old culture was decaying. 
+Thunderstone was their sweat and blood, the human law had to prevail. In order for the best to lead, the South had to cut its ties with the North.
+Overnight, the Southern population organized into an independent faction. Loyalist northern forces were slaughtered and the trade routes closed. Thundertown was protected by the natural barriers of the mountains. Even undermanned, the Southern forces easily managed to secure their new dominion. They had the best minds, the best equipment, and all the supply of Thunderstone they needed. The CORPORATION rose, ruled by the COUNCIL OF TEN, an assembly made of the worthiest Southerners. They pledged never to let corrupt politicians take power from the hands of the people. As they controlled the best commodity in the market, they quickly set up a war economy, selling their Thunderstone to the highest bidder and using the profit to protect their more advanced, more prosperous civilization. The new weapons and tools born from the study of the wonder rock would be theirs alone.
+With war came a profound cultural schism. For the Corporation, nature was no longer a sacred entity but a variable that could be exploited, replenished, and adjusted. Belief in progress turned to belief in technology. It would provide all answers, all solutions. Growth was infinite, there were no longer any boundaries, whether moral or physical, to the ambition of humankind. With high risks came high rewards. A secluded, vulnerable faction could not function like a dying kingdom. For other factions, the Corporation was rotten at the core, its Council was plagued with a mad-scientist mentality that would forever scar nature. The Kingdom, weakened by the division, and the Empire, who now had to fight on two fronts, had to cripple the fast-pace development of this new faction, but the most visceral reaction to the rise of the Corporation came from the most ancient of all people.
+For the Guardians, witnessing the chaotic evolution of their descendants had been part of the fatality of nature. What happens is neither good nor bad, it just is. Yet, the discovery of Thunderstone had changed everything. For humans and demons, for the Cult and the Corporation, Thunderstone was just a precious resource. For the Guardians, it was the lifeblood of their environment. They had always been aware of its existence. They knew where it lay and had vowed never to touch it… because it was not a stone of thunder, but the concentration of natural essence over time. A resource that slowly seeped in the ground, carried with every drop of water, transported by cloud and rain, dispatched through the earth to breathe life into all things. The huge reserves the Corporation was tapping into were destined to irrigate the entire landmass for thousands of years. Without it, all life would wither and die. Removing it from the mountains would prevent the rivers from carrying it to all corners of the land. Once Thunderstone was gone, nature would be forever barren.
+The Guardians could not let a small decadent group jeopardize the survival of all living beings. The Corporation had to be stopped at all costs. The Guardians rose from an age-old slumber and marched to battle. Even deprived of technology’s wonders, they could count on the brute force of nature. In an unprecedented war effort, they gathered their best and crossed the barren mountains to surround the Corporation. They would at least prevent its development and cripple its mining enterprise. Caught unaware, the Corporation found itself on the brink of chaos. Their mines were shut, their advanced weapons could not repel the relentless assaults of the Guardians. Deprived of its miracle drug, the jewel of human civilization was slow and unstable, plagued by the dark side of Thunderstone progress: higher death rates, lower life expectancy, new diseases, handicapped offspring. 
+The brutal march to progress, blinded by profit and hubris, was about to usher in their destruction.
+Thundertown was about to fall. As humans and demons were waiting for the Guardians’ last blow to feast upon the ruins of the Corporation, the Council of Ten was about to fall apart when the most brilliant scientific minds of the age came up with an invention so unruly that they had chosen to conceal it from the Corporation people. When all seemed to be lost, the Council unveiled a secret weapon. During the course of his unholy experiments, he had found a way to infuse the body of dead humans with a Thunderstone-based fluid that turned them into viable soldiers. Insensitive to pain, impossible to cut down with regular weapons, this undead army could be raised from the battlegrounds all around Thundertown and break the siege. The mad scientist’s plan caught the Guardians off guard. Fighting soldiers they had already killed, on all sides, they had to retreat chaotically to the mountains. For the Corporation, victory brought not only a promise of survival, but of future dominance over all factions. The Undead Horde, continually replenished with dead humans, could be ordered around like an army of puppets. It would grow with each battle, whatever the outcome...
+ """             
+             `;
+            try {
+                const result = await chat.sendMessage(initialBotInstruction);
+                const response = await result.response;
+                let text = await response.text();
+                addMessageToChat('Sage', "I'm ready to assist you, Warlord. Which story shall we delve into today?", 'bot-message'); // Confirmation of the instruction
+            } catch (error) {
+                console.error("Error sending initial bot message:", error);
+                displayError("Failed to initialize the chatbot. Please try again later.");
+            }
+        }
+
+        // Display error messages
+        function displayError(errorMessage) {
+            let errorArea = document.getElementById('error-message');
+            if (!errorArea) {
+                console.error("Error area not found");
+                return;
+            }
+            errorArea.textContent = errorMessage;
+        }
+
+        // Handle Enter key press in the input field
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendUserMessage(event);
+            }
+        }
+    </script>
+</body>
+</html>
