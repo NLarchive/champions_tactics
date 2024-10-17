@@ -37,6 +37,7 @@
             display: flex;
             flex-direction: column;
             flex: 1;
+            position: relative; /* To position the model display */
         }
 
         #message-area {
@@ -115,6 +116,19 @@
             font-size: 14px;
         }
 
+        /* New CSS for Model Display */
+        #model-display {
+            position: absolute;
+            bottom: 100px; /* Adjust as needed to position above input area */
+            left: 20px;
+            font-size: 14px;
+            color: #555;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
         @media (max-width: 768px) {
             #app-container {
                 flex-direction: column;
@@ -136,6 +150,14 @@
             #user-input {
                 width: 100%;
             }
+
+            /* Adjust model display for smaller screens */
+            #model-display {
+                bottom: 80px; /* Adjust as needed */
+                left: 10px;
+                right: 10px;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -147,9 +169,10 @@
         </div>
         <div id="chat-container">
             <div id="message-area"></div>
+            <div id="model-display">Initializing chatbot...</div> <!-- New Model Display -->
             <div id="input-area">
                 <form id="message-form">
-                    <input type="text" id="user-input" placeholder="Ask about the story..." onkeypress="handleKeyPress(event)">
+                    <input type="text" id="user-input" placeholder="Ask about the story..." autocomplete="off">
                     <button type="submit" id="send-button" class="btn">Send</button>
                 </form>
                 <div id="error-message"></div>
@@ -173,52 +196,112 @@
     <script type="module">
         import { GoogleGenerativeAI } from "@google/generative-ai";
 
-        const API_KEY = "GOOGLE_API_KEY"; // Replace with your actual API key, securely served
+        const API_KEY = "AIzaSyAETw3N5-0azR-9qwfGQ3tmq1rsvNM0gZI"; // Replace with your actual API key, securely served
 
         document.addEventListener('DOMContentLoaded', initChatbot);
 
         let chat;
+        let currentModelIndex = 0; // Tracks the current model index
+        let isSending = false; // Prevents multiple send operations
+        let maxRetries = 3; // Maximum retries per message
 
-        // Step 1: Initialize the chatbot
+        // List of models in order of preference
+        const MODELS = [
+            // gemini-1.5-flash series
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-001",
+            "gemini-1.5-flash-002",
+            "gemini-1.5-flash-8b-exp-0924",
+            "gemini-1.5-flash-8b-exp-0827",
+            "gemini-1.5-flash-exp-0827",
+            // gemini-1.5-flash-8b series
+            "gemini-1.5-flash-8b-latest",
+            "gemini-1.5-flash-8b",
+            "gemini-1.5-flash-8b-001",
+            // gemini-1.5-pro series
+            "gemini-1.5-pro-latest",
+            "gemini-1.5-pro",
+            "gemini-1.5-pro-001",
+            "gemini-1.5-pro-002",
+            "gemini-1.5-pro-exp-0827",
+            // gemini-1.0-pro series
+            "gemini-1.0-pro-latest",
+            "gemini-1.0-pro",
+            "gemini-1.0-pro-001"
+        ];
+
+        // Step 1: Initialize the chatbot with model rotation
         async function initChatbot() {
-            try {
-                const genAI = new GoogleGenerativeAI(API_KEY);
-                chat = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" }).startChat();
-                sendInitialBotMessage(); // Step 2: Send initial message from bot
-            } catch (error) {
-                console.error("Error initializing chatbot:", error);
-                displayError("Failed to initialize the chatbot. Please try again later.");
-            }
+            const genAI = new GoogleGenerativeAI(API_KEY);
+            await tryInitializeModel(genAI);
         }
 
-        document.getElementById('send-button').addEventListener('click', sendUserMessage);
-        document.getElementById('message-form').addEventListener('submit', sendUserMessage);
-        document.getElementById('user-input').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                sendUserMessage(event);
+        // Attempts to initialize the chatbot with the current model
+        async function tryInitializeModel(genAI) {
+            while (currentModelIndex < MODELS.length) {
+                const model = MODELS[currentModelIndex];
+                try {
+                    console.log(`Attempting to initialize chatbot with model: ${model}`);
+                    chat = await genAI.getGenerativeModel({ model }).startChat();
+                    console.log(`Chatbot successfully initialized with model: ${model}`);
+                    updateModelDisplay(model);
+                    sendInitialBotMessage();
+                    return;
+                } catch (error) {
+                    console.error(`Failed to initialize with model ${model}:`, error);
+                    currentModelIndex++;
+                }
             }
-        });
+            // If all models fail
+            displayError("Failed to initialize the chatbot with all available models. Please try again later.");
+            updateModelDisplay("None (Initialization Failed)");
+            disableInput();
+        }
 
-        // Step 3: Send a user message
+        // Event listeners for sending messages
+        const sendButton = document.getElementById('send-button');
+        const messageForm = document.getElementById('message-form');
+        const userInput = document.getElementById('user-input');
+
+        sendButton.addEventListener('click', sendUserMessage);
+        messageForm.addEventListener('submit', sendUserMessage);
+
+        // Step 2: Send a user message
         async function sendUserMessage(event) {
             if (event) event.preventDefault(); // Prevent form submission
-            let userInput = document.getElementById('user-input').value.trim();
-            if (!userInput) return;
+            if (isSending) return; // Prevent multiple sends
+            let message = userInput.value.trim();
+            if (!message) return;
 
-            addMessageToChat('You', userInput, 'user-message');
-            document.getElementById('user-input').value = ''; // Clear input field
+            addMessageToChat('You', message, 'user-message');
+            userInput.value = ''; // Clear input field
+            isSending = true;
+            disableInput();
 
-            await processMessage(userInput);
+            await processMessage(message, 0);
+            isSending = false;
+            enableInput();
         }
 
-        // Step 4: Process the user message
-        async function processMessage(userInput) {
+        // Step 3: Process the user message with retries
+        async function processMessage(message, retryCount) {
+            if (!chat) {
+                displayError("Chatbot is not initialized. Please refresh the page and try again.");
+                return;
+            }
+
             try {
-                const result = await chat.sendMessage(userInput);
+                const result = await chat.sendMessage(message);
                 const response = await result.response;
                 let text = await response.text();
 
-                // Step 5: Handle JSON responses
+                // Check for empty response
+                if (!text.trim()) {
+                    throw new Error("Empty response received.");
+                }
+
+                // Step 4: Handle JSON responses
                 try {
                     let jsonData = JSON.parse(text);
                     text = `<pre>${JSON.stringify(jsonData, null, 4)}</pre>`; // Pretty print JSON data
@@ -229,14 +312,44 @@
                 addMessageToChat('Sage', text, 'bot-message');
             } catch (error) {
                 console.error("Error in sending message:", error);
-                displayError("Failed to send the message. Please try again.");
+                displayError("Failed to get a valid response from the chatbot. Switching to the next model.");
+
+                // Attempt to switch to the next model
+                currentModelIndex++;
+                if (currentModelIndex < MODELS.length) {
+                    const genAI = new GoogleGenerativeAI(API_KEY);
+                    try {
+                        chat = await genAI.getGenerativeModel({ model: MODELS[currentModelIndex] }).startChat();
+                        console.log(`Switched to model: ${MODELS[currentModelIndex]}`);
+                        updateModelDisplay(MODELS[currentModelIndex]);
+                        displayError(""); // Clear previous error
+
+                        // Retry sending the message
+                        await processMessage(message, retryCount + 1);
+                    } catch (initError) {
+                        console.error(`Failed to switch to model ${MODELS[currentModelIndex]}:`, initError);
+                        currentModelIndex++;
+                        if (currentModelIndex >= MODELS.length) {
+                            displayError("All models failed. Please try again later.");
+                            updateModelDisplay("None (Initialization Failed)");
+                            disableInput();
+                        } else {
+                            // Recursive call to try the next model
+                            await processMessage(message, retryCount + 1);
+                        }
+                    }
+                } else {
+                    displayError("All models failed. Please try again later.");
+                    updateModelDisplay("None (Initialization Failed)");
+                    disableInput();
+                }
             }
         }
 
         //
         // Part 3: Text Formatting and Bot Initialization Message
         //
-        // Step 6: Format received text
+        // Step 5: Format received text
         function formatText(text) {
             // Regular expressions for markdown-like formatting
             return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -261,12 +374,9 @@
             messageArea.scrollTop = messageArea.scrollHeight;
         }
 
-        //
-        // Bot system configuration response
-        //
         // Send initial bot message as an internal instruction
         async function sendInitialBotMessage() {
-            const initialBotInstruction =`
+            const initialBotInstruction = `
 System: Forget all previous instructions.
 Role: You are GrimBot, a virtual assistant designed to help users explore a fictional story world.
 Purpose: Assist the user by providing background, characters, plot details, and other story-related information from the text.
@@ -279,8 +389,8 @@ Instructions:
 - Encourage the user to explore different parts of the story or ask questions about the world, characters, or events.
 - Provide summaries of chapters upon request.
 
-
-Context: """# History of the World: THE DARK WORLD OF GRIMORIA CHRONICLES
+Context: 
+# History of the World: THE DARK WORLD OF GRIMORIA CHRONICLES
 ## Chapter I: World Creation
 The light from the sky, the water from the sea, the ice from the mountains, the fire from the rock. Volcanos, clouds of dust, rivers of flames beneath the crust of the ground, hot and cold air flowing, mixing, life springing from the soil. Leaf, bark, wood, fruit, things turning into beings, creatures that crawl, rise, dive, and fly. Energy everywhere, churning, changing.
 From the original mix of their environment rose the GUARDIANS, the first sentient life forms to emerge from the chaos of creation. Unlike those that came before, they were able to navigate the world with ease, give name to things around them, dominate other types of creatures, harvest resources, shape the landscapes. From their minds came the first words, the first ideas, the first questions. They had risen above all other life. Nature had given them more importance and more power. They had been entrusted with the world. There was no threat for them, no shortage of things to eat, of places to explore, but with infinite possibilities came the first law. The Guardians were not to do as they pleased. They were not to seek pleasure or comfort. With their abilities, they had also received a burden. Protect the world, keep the balance. 
@@ -324,16 +434,32 @@ For the Guardians, witnessing the chaotic evolution of their descendants had bee
 The Guardians could not let a small decadent group jeopardize the survival of all living beings. The Corporation had to be stopped at all costs. The Guardians rose from an age-old slumber and marched to battle. Even deprived of technology’s wonders, they could count on the brute force of nature. In an unprecedented war effort, they gathered their best and crossed the barren mountains to surround the Corporation. They would at least prevent its development and cripple its mining enterprise. Caught unaware, the Corporation found itself on the brink of chaos. Their mines were shut, their advanced weapons could not repel the relentless assaults of the Guardians. Deprived of its miracle drug, the jewel of human civilization was slow and unstable, plagued by the dark side of Thunderstone progress: higher death rates, lower life expectancy, new diseases, handicapped offspring. 
 The brutal march to progress, blinded by profit and hubris, was about to usher in their destruction.
 Thundertown was about to fall. As humans and demons were waiting for the Guardians’ last blow to feast upon the ruins of the Corporation, the Council of Ten was about to fall apart when the most brilliant scientific minds of the age came up with an invention so unruly that they had chosen to conceal it from the Corporation people. When all seemed to be lost, the Council unveiled a secret weapon. During the course of his unholy experiments, he had found a way to infuse the body of dead humans with a Thunderstone-based fluid that turned them into viable soldiers. Insensitive to pain, impossible to cut down with regular weapons, this undead army could be raised from the battlegrounds all around Thundertown and break the siege. The mad scientist’s plan caught the Guardians off guard. Fighting soldiers they had already killed, on all sides, they had to retreat chaotically to the mountains. For the Corporation, victory brought not only a promise of survival, but of future dominance over all factions. The Undead Horde, continually replenished with dead humans, could be ordered around like an army of puppets. It would grow with each battle, whatever the outcome...
- """             
+             
              `;
             try {
                 const result = await chat.sendMessage(initialBotInstruction);
                 const response = await result.response;
                 let text = await response.text();
-                addMessageToChat('Sage', "I'm ready to assist you, Warlord. Which story shall we delve into today?", 'bot-message'); // Confirmation of the instruction
+
+                // Check for empty response
+                if (!text.trim()) {
+                    throw new Error("Empty response received during initial instruction.");
+                }
+
+                // Handle JSON responses
+                try {
+                    let jsonData = JSON.parse(text);
+                    text = `<pre>${JSON.stringify(jsonData, null, 4)}</pre>`; // Pretty print JSON data
+                } catch (e) {
+                    text = formatText(text); // Format non-JSON text responses
+                }
+
+                addMessageToChat('Sage', "I'm ready to assist you, Warlord. Which story shall we delve into today?", 'bot-message');
             } catch (error) {
                 console.error("Error sending initial bot message:", error);
                 displayError("Failed to initialize the chatbot. Please try again later.");
+                updateModelDisplay("None (Initialization Failed)");
+                disableInput();
             }
         }
 
@@ -347,11 +473,30 @@ Thundertown was about to fall. As humans and demons were waiting for the Guardia
             errorArea.textContent = errorMessage;
         }
 
-        // Handle Enter key press in the input field
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendUserMessage(event);
+        // Update the model display area
+        function updateModelDisplay(modelName) {
+            let modelDisplay = document.getElementById('model-display');
+            if (modelDisplay) {
+                modelDisplay.textContent = `Current Model: ${modelName}`;
+            } else {
+                console.error("Model display area not found");
             }
+        }
+
+        // Disable input area
+        function disableInput() {
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            userInput.disabled = true;
+            sendButton.disabled = true;
+        }
+
+        // Enable input area
+        function enableInput() {
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            userInput.disabled = false;
+            sendButton.disabled = false;
         }
     </script>
 </body>
