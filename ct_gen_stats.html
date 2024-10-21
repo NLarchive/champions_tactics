@@ -483,7 +483,7 @@ Zealous,,,,2,,,,
       const lines = csvString.trim().split('\n');
       const data = {};
       let currentCategory = null;
-      const headers = lines[0].split(',');
+      const headers = lines[0].split(',').map(header => header.trim());
 
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -491,10 +491,10 @@ Zealous,,,,2,,,,
           currentCategory = line.substring(2).toUpperCase();
           data[currentCategory] = [];
         } else if (currentCategory && line && !line.startsWith("Gene,")) { // Skip header row
-          const values = line.split(',');
+          const values = line.split(',').map(value => value.trim());
           const obj = {};
           headers.forEach((header, index) => {
-            obj[header.trim()] = values[index] ? values[index].trim() : "";
+            obj[header] = values[index] ? values[index] : "";
           });
           data[currentCategory].push(obj);
         }
@@ -587,73 +587,57 @@ Zealous,,,,2,,,,
       displayResultsTable(summedData);
     }
 
-    // Function to sum stats for selected genes (modified to handle three datasets)
+    // Function to sum stats for selected genes (corrected to sum all stats without merging by gene name)
     function sumStats(selectedGenes1, selectedGenes2, selectedGenes3, data1, data2, data3) { 
-      const filteredData1 = getFilteredData(selectedGenes1, data1);
-      const filteredData2 = getFilteredData(selectedGenes2, data2);
-      const filteredData3 = getFilteredData(selectedGenes3, data3); 
-
-      const mergedData = {};
-
-      // Function to merge data from a single dataset into mergedData
-      function mergeData(filteredData) {
-        filteredData.forEach(row => {
-          if (mergedData[row.Gene]) {
-            // Sum numeric values if gene exists
-            Object.keys(row).forEach(key => {
-              if (!isNaN(parseFloat(row[key]))) {
-                mergedData[row.Gene][key] = (parseFloat(mergedData[row.Gene][key]) || 0) + parseFloat(row[key]);
-              }
-            });
-          } else {
-            mergedData[row.Gene] = { ...row }; 
-          }
-        });
-      }
-
-      // Merge data from all three datasets
-      mergeData(filteredData1);
-      mergeData(filteredData2);
-      mergeData(filteredData3); 
-
-      const resultArray = Object.values(mergedData);
-
-      if (resultArray.length === 0) {
+      const allSelectedGenes = [...selectedGenes1, ...selectedGenes2, ...selectedGenes3];
+      if (allSelectedGenes.length === 0) {
         return [];
       }
 
-      // Calculate total stats
-      const totalStats = {};
-      Object.keys(resultArray[0]).forEach(key => {
-        if (key === 'Gene') {
-          totalStats[key] = 'Total (with base)';
-        } else if (!isNaN(parseFloat(resultArray[0][key]))) {
-          totalStats[key] = resultArray.reduce((sum, row) => sum + (parseFloat(row[key]) || 0), 0);
-        } else {
-          totalStats[key] = ''; // Set non-numeric fields to empty string
+      // Initialize totalStats with base values
+      const totalStats = {
+        Gene: 'Total (with base)',
+        'Vitality': 40,
+        'Initiative': 0,
+        'Phys. Power': 0,
+        'Elem. Power': 0,
+        'Phys. Resist.': 0,
+        'Elem. Resist.': 0,
+        'Crit. Chance': 0,
+        'Crit. Multiplier': 60
+      };
+
+      const genesData = [];
+
+      // Helper function to find a gene in the data
+      function findGene(geneName, data) {
+        for (const category in data) {
+          const gene = data[category].find(g => g.Gene === geneName);
+          if (gene) return gene;
+        }
+        return null;
+      }
+
+      allSelectedGenes.forEach(geneName => {
+        let gene = findGene(geneName, data1);
+        if (!gene) gene = findGene(geneName, data2);
+        if (!gene) gene = findGene(geneName, data3);
+        if (gene) {
+          genesData.push(gene);
+          // Sum the stats
+          Object.keys(totalStats).forEach(key => {
+            if (key !== 'Gene') {
+              const value = parseFloat(gene[key]);
+              if (!isNaN(value)) {
+                totalStats[key] += value;
+              }
+            }
+          });
         }
       });
 
-      // Add base stats to the total
-      totalStats['Vitality'] = (parseFloat(totalStats['Vitality']) || 0) + 40;
-      totalStats['Crit. Multiplier'] = (parseFloat(totalStats['Crit. Multiplier']) || 0) + 60;
-
-      resultArray.push(totalStats);
-
-      return resultArray;
-    }
-
-    // Helper function to filter data based on selected genes
-    function getFilteredData(selectedGenes, data) {
-      const filtered = [];
-      for (const category in data) {
-        data[category].forEach(gene => {
-          if (selectedGenes.includes(gene.Gene)) {
-            filtered.push(gene);
-          }
-        });
-      }
-      return filtered;
+      // Return the list of genes data plus the total
+      return [...genesData, totalStats];
     }
 
     // Function to display results in a table
@@ -682,7 +666,14 @@ Zealous,,,,2,,,,
         const tr = table.insertRow();
         headerNames.forEach(header => {
           const td = tr.insertCell();
-          td.textContent = row[header] || '0';
+          let value = row[header];
+
+          if (header !== 'Gene') {
+            value = parseFloat(value);
+            value = isNaN(value) ? '0' : value;
+          }
+
+          td.textContent = value;
         });
       });
 
@@ -695,6 +686,8 @@ Zealous,,,,2,,,,
       populateGeneSelection('file2', 'FACTION'); // Default to FACTION
       populateGeneSelection('file3', 'FACTION'); // Default to FACTION 
     };
+
+
   </script>
 
 </body>
