@@ -187,11 +187,11 @@
   </style>
 </head>
 <body>
-
+  
   <h1>Gene Stats Calculator</h1>
 
-  <p>Select one gene per category (Quirk in dominant instead of recessive if you have it):</p>
-
+  <p>Select one gene per category (Quirk in dominant instead of recessive if you have it)</p>
+  <p>Official stats not yet relased, could be incongruencies until update</p>
   <div class="container">
     <div class="gene-section">
       <h2>Dominant Genes</h2>
@@ -205,7 +205,7 @@
       </select>
       <div id="file1-genes" class="gene-list"></div>
       <p>Selected Dominant Genes:</p>
-      <div id="file1-selected-genes" class="selected-genes"></div>
+      <div id="file1-selected-genes" class="selected-genes">None</div>
     </div>
 
     <div class="gene-section">
@@ -220,7 +220,7 @@
       </select>
       <div id="file2-genes" class="gene-list"></div>
       <p>Selected Recessive Genes:</p>
-      <div id="file2-selected-genes" class="selected-genes"></div>
+      <div id="file2-selected-genes" class="selected-genes">None</div>
     </div>
 
     <div class="gene-section">
@@ -235,7 +235,7 @@
       </select>
       <div id="file3-genes" class="gene-list"></div>
       <p>Selected Minor Genes:</p>
-      <div id="file3-selected-genes" class="selected-genes"></div>
+      <div id="file3-selected-genes" class="selected-genes">None</div>
     </div>
   </div>
 
@@ -320,84 +320,8 @@ Veteran,,,4,,,,,
 Vigilante,8,,,,,,,
 Zealous,,,,4,,,,
 `;
-
+    
     const csvData2 = `
-Gene,Vitality,Initiative,Phys. Power,Elem. Power,Phys. Resist.,Elem. Resist.,Crit. Chance,Crit. Multiplier
-# FACTION
-Corporation,4,,1,,,,,
-Cult,,2,,1,,,,
-Empire,,,,,,,4,5
-Guardian,,2,,1,,,,
-Kingdom,4,,1,,,,,
-Tribe,,,3,2,,,,
-Undying,4,,,1,,,,
-# JOB
-Arcanist,,,2,3,,,,
-Assassin,,2,,,,,,5
-Barbarian,,,2,2,,,,
-Druid,6,,,,,,,
-Duelist,2,,2,1,,,,
-Huntsman,,2,,,,,,5
-Inquisitor,,2,,1,,,,
-Lord,2,,2,1,,,,
-Mystic,2,2,,,,,,
-Necromancer,2,,2,2,,,,
-Paladin,6,,,,,,,
-Protector,6,,,,,,,
-Scientist,,,2,2,,,,5
-Shaman,4,,1,,,,,
-Soldier,4,1,,,,,,
-Sorcerer,,,2,3,,,,
-Warden,4,1,,,,,,
-# ELEMENT
-Air,,2,1,,,,,
-Chaos,,,,,,,4,5
-Darkness,4,,,1,,,,
-Fire,,,2,3,,,,
-Light,,,2,1,,,2,
-Nature,4,,,1,,,,
-Order,,2,1,,,,,
-Techno,4,,,1,,,,
-Water,,2,1,,,,,
-# WEAPON
-Blunderbuss,,,,,,,4,
-Crossbow,,,,,,,4,
-Dagger,,2,,,,,,
-Greataxe,,,2,,,,,
-Greatsword,4,,,,,,,
-Halberd,,,2,,,,,
-Katana,,2,,,,,,
-Mystical horn,,,,2,,,,
-Rapier,,2,,,,,,
-Runic scimitar,,2,,,,,,
-Scepter,,,,2,,,,
-Sickle,,2,,,,,,
-Spatha,,2,,,,,,
-Spear,,,2,,,,,
-Spellbook,,,,2,,,,
-Voodoo doll,,,,2,,,,
-# QUIRK
-Agile,,2,,,,,,
-Blind,,,,2,,,,
-Corporate,4,,,,,,,
-Cult pupil,4,,,,,,,
-Cursed,,,,2,,,,
-Demon slayer,,,2,,,,,
-Desert fighter,,2,,,,,,
-Evil,,,,2,,,,
-Lucky,,,,,,,4,
-Masked,,,,,,,4,
-One eyed,,,2,,,,,
-Quick,,2,,,,,,
-Runic,4,,,,,,,
-Sacred,4,,,,,,,
-Strong,,,2,,,,,
-Veteran,,,2,,,,,
-Vigilante,4,,,,,,,
-Zealous,,,,2,,,,
-`;
-
-    const csvData3 = `
 Gene,Vitality,Initiative,Phys. Power,Elem. Power,Phys. Resist.,Elem. Resist.,Crit. Chance,Crit. Multiplier
 # FACTION
 Corporation,4,,1,,,,,
@@ -504,7 +428,13 @@ Zealous,,,,2,,,,
 
     // Function to populate gene selection
     function populateGeneSelection(fileId, category) {
-      const csvData = fileId === 'file1' ? csvData1 : (fileId === 'file2' ? csvData2 : csvData3); 
+      let csvData;
+      if (fileId === 'file1') {
+        csvData = csvData1;
+      } else {
+        csvData = csvData2;
+      }
+
       const geneList = document.getElementById(`${fileId}-genes`);
       geneList.innerHTML = ''; // Clear previous options
 
@@ -519,7 +449,14 @@ Zealous,,,,2,,,,
           toggleGeneSelection(fileId, category, gene);
         };
         // Check if the gene is already selected
-        const selectedGenes = fileId === 'file1' ? selectedGenes1 : (fileId === 'file2' ? selectedGenes2 : selectedGenes3); 
+        let selectedGenes;
+        if (fileId === 'file1') {
+          selectedGenes = selectedGenes1;
+        } else if (fileId === 'file2') {
+          selectedGenes = selectedGenes2;
+        } else {
+          selectedGenes = selectedGenes3;
+        }
         if (selectedGenes[category] && selectedGenes[category].includes(gene)) {
           option.classList.add('selected');
         }
@@ -530,7 +467,14 @@ Zealous,,,,2,,,,
 
     // Function to toggle gene selection
     function toggleGeneSelection(fileId, category, gene) {
-      const selectedGenes = fileId === 'file1' ? selectedGenes1 : (fileId === 'file2' ? selectedGenes2 : selectedGenes3); 
+      let selectedGenes;
+      if (fileId === 'file1') {
+        selectedGenes = selectedGenes1;
+      } else if (fileId === 'file2') {
+        selectedGenes = selectedGenes2;
+      } else {
+        selectedGenes = selectedGenes3;
+      }
       
       if (!selectedGenes[category]) {
         selectedGenes[category] = [];
@@ -563,53 +507,50 @@ Zealous,,,,2,,,,
     // Function to update the displayed list of selected genes
     function updateSelectedGenesDisplay(fileId) {
       const selectedGenesSpan = document.getElementById(`${fileId}-selected-genes`);
-      const selectedGenes = fileId === 'file1' ? selectedGenes1 : (fileId === 'file2' ? selectedGenes2 : selectedGenes3); 
+      let selectedGenes;
+      if (fileId === 'file1') {
+        selectedGenes = selectedGenes1;
+      } else if (fileId === 'file2') {
+        selectedGenes = selectedGenes2;
+      } else {
+        selectedGenes = selectedGenes3;
+      }
       const allSelectedGenes = Object.values(selectedGenes).flat();
       selectedGenesSpan.textContent = allSelectedGenes.length > 0 ? allSelectedGenes.join(', ') : 'None';
     }
 
     // Calculate and display summed stats
     function calculateStats() {
-      const category1 = document.getElementById('file1-category').value;
-      const category2 = document.getElementById('file2-category').value;
-      const category3 = document.getElementById('file3-category').value; 
-
       const parsedData1 = parseCSV(csvData1);
       const parsedData2 = parseCSV(csvData2);
-      const parsedData3 = parseCSV(csvData3); 
+      // csvData3 is merged into csvData2 and no longer used
 
       const allSelectedGenes1 = Object.values(selectedGenes1).flat();
       const allSelectedGenes2 = Object.values(selectedGenes2).flat();
       const allSelectedGenes3 = Object.values(selectedGenes3).flat(); 
 
-      const summedData = sumStats(allSelectedGenes1, allSelectedGenes2, allSelectedGenes3, parsedData1, parsedData2, parsedData3);
-
+      const summedData = sumStats(allSelectedGenes1, allSelectedGenes2, allSelectedGenes3, parsedData1, parsedData2);
       displayResultsTable(summedData);
     }
 
-    // Function to sum stats for selected genes (corrected to sum all stats without merging by gene name)
-    function sumStats(selectedGenes1, selectedGenes2, selectedGenes3, data1, data2, data3) { 
-      const allSelectedGenes = [...selectedGenes1, ...selectedGenes2, ...selectedGenes3];
-      if (allSelectedGenes.length === 0) {
-        return [];
-      }
-
+    // Function to sum stats for selected genes with proper data referencing
+    function sumStats(selectedGenes1, selectedGenes2, selectedGenes3, data1, data2) { 
       // Initialize totalStats with base values
       const totalStats = {
         Gene: 'Total (with base)',
-        'Vitality': 44,
+        'Vitality': 44,            // Base Vitality
         'Initiative': 0,
         'Phys. Power': 0,
         'Elem. Power': 0,
         'Phys. Resist.': 0,
         'Elem. Resist.': 0,
         'Crit. Chance': 0,
-        'Crit. Multiplier': 50
+        'Crit. Multiplier': 50     // Base Crit. Multiplier
       };
 
       const genesData = [];
 
-      // Helper function to find a gene in the data
+      // Helper function to find a gene in a specific data set
       function findGene(geneName, data) {
         for (const category in data) {
           const gene = data[category].find(g => g.Gene === geneName);
@@ -618,10 +559,29 @@ Zealous,,,,2,,,,
         return null;
       }
 
-      allSelectedGenes.forEach(geneName => {
-        let gene = findGene(geneName, data1);
-        if (!gene) gene = findGene(geneName, data2);
-        if (!gene) gene = findGene(geneName, data3);
+      // Process selectedGenes1 (Dominant) using data1
+      selectedGenes1.forEach(geneName => {
+        const gene = findGene(geneName, data1);
+        if (gene) {
+          genesData.push(gene);
+          // Sum the stats
+          Object.keys(totalStats).forEach(key => {
+            if (key !== 'Gene') {
+              const value = parseFloat(gene[key]);
+              if (!isNaN(value)) {
+                totalStats[key] += value;
+              }
+            }
+          });
+        }
+      });
+
+      // Combine Recessive and Minor Genes
+      const combinedSelectedGenes2_3 = [...selectedGenes2, ...selectedGenes3];
+
+      // Process selectedGenes2 and selectedGenes3 (Recessive and Minor) using data2
+      combinedSelectedGenes2_3.forEach(geneName => {
+        const gene = findGene(geneName, data2);
         if (gene) {
           genesData.push(gene);
           // Sum the stats
@@ -639,6 +599,7 @@ Zealous,,,,2,,,,
       // Return the list of genes data plus the total
       return [...genesData, totalStats];
     }
+
 
     // Function to display results in a table
     function displayResultsTable(data) {
@@ -682,12 +643,10 @@ Zealous,,,,2,,,,
 
     // Initialize the page
     window.onload = function() {
-      populateGeneSelection('file1', 'FACTION'); // Default to FACTION
-      populateGeneSelection('file2', 'FACTION'); // Default to FACTION
-      populateGeneSelection('file3', 'FACTION'); // Default to FACTION 
+      populateGeneSelection('file1', 'FACTION'); // Default to FACTION for Dominant Genes
+      populateGeneSelection('file2', 'FACTION'); // Default to FACTION for Recessive Genes
+      populateGeneSelection('file3', 'FACTION'); // Default to FACTION for Minor Genes 
     };
-
-
   </script>
 
 </body>
