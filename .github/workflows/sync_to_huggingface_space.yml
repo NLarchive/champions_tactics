@@ -1,4 +1,7 @@
 - name: Sync ct_url_breed Folder to Hugging Face Space
+on:
+  workflow_dispatch: # Allows manual triggering for testing or on-demand sync
+  
   env:
     HF_TOKEN: ${{ secrets.HF_TOKEN }}
   run: |
