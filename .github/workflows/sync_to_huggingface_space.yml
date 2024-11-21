@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # Allows manual triggering for testing or on-demand sync
 
 jobs:
-  sync-to-hub:
+  sync-to-hf-space:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -18,35 +18,38 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Navigate to the subfolder (ct_url_breed)
+          set -e  # Exit immediately if a command exits with a non-zero status
+
+          echo "Navigating to the ct_url_breed subfolder..."
           cd Deminiko/ct_url_breed
 
-          # Create a temporary directory outside the current working directory
+          echo "Creating a temporary directory..."
           temp_dir=$(mktemp -d)
+          echo "Temporary directory created at: $temp_dir"
 
-          # Copy all contents of the ct_url_breed folder to the temporary directory
+          echo "Copying contents to the temporary directory..."
           cp -r ./* "$temp_dir/"
 
-          # Navigate to the temporary directory
+          echo "Navigating to the temporary directory..."
           cd "$temp_dir"
 
-          # Initialize a new Git repository in the temporary directory
+          echo "Initializing a new Git repository..."
           git init
 
-          # Configure Git user information for this repository
+          echo "Configuring Git user information..."
           git config user.email "lluin@hotmail.com"
           git config user.name "NLarchive"
 
-          # Add and commit all files in the ct_url_breed folder
+          echo "Adding Hugging Face repository as remote with authentication..."
+          git remote add origin https://Deminiko:${HF_TOKEN}@huggingface.co/spaces/Deminiko/ct_url_breed.git
+
+          echo "Adding all files to Git..."
           git add .
+
+          echo "Committing changes..."
           git commit -m "Sync ct_url_breed folder to Hugging Face Space"
 
-          # Add the Hugging Face repository as a remote
-          git remote add origin https://huggingface.co/spaces/Deminiko/ct_url_breed
-
-          # Authenticate with Hugging Face
-          git config credential.helper store
-          echo "https://huggingface.co=HF_TOKEN:${HF_TOKEN}" > ~/.git-credentials
-
-          # Force-push the contents of the temporary directory to the Hugging Face Space
+          echo "Pushing changes to Hugging Face Space..."
           git push --force origin main
+
+          echo "Sync completed successfully!"
