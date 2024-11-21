@@ -1,8 +1,8 @@
 name: Sync ct_url_breed Folder to Hugging Face Space
 
 on:
-  schedule:
-    - cron: '0 0 * * 1' # Weekly trigger (every Monday at 00:00 UTC)
+  #schedule:
+  #  - cron: '0 0 * * 1' # Weekly trigger (every Monday at 00:00 UTC)
   workflow_dispatch: # Allows manual triggering for testing or on-demand sync
 
 jobs:
