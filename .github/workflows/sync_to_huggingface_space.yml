@@ -1,20 +1,46 @@
-name: Sync to Hugging Face hub
-on:
-  push:
-    branches: [main]
+name: Sync ct_url_breed Folder to Hugging Face Space
 
-  # to run this workflow manually from the Actions tab
-  workflow_dispatch:
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Weekly trigger (every Monday at 00:00 UTC)
+  workflow_dispatch: # Allows manual triggering for testing or on-demand sync
 
 jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          lfs: true
-      - name: Push to hub
+
+      - name: Sync ct_url_breed Folder to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push https://HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/Deminiko/ct_url_breed
+        run: |
+          # Navigate to the subfolder (ct_url_breed)
+          cd Deminiko/ct_url_breed
+
+          # Create a temporary directory outside the current working directory
+          temp_dir=$(mktemp -d)
+
+          # Copy all contents of the ct_url_breed folder to the temporary directory
+          cp -r . "$temp_dir/"
+
+          # Navigate to the temporary directory
+          cd "$temp_dir"
+
+          # Configure Git user information for this repository
+          git config user.email "lluin@hotmail.com"
+          git config user.name "NLarchive"
+
+          # Initialize a new Git repository in the temporary directory
+          git init
+          git remote add origin https://huggingface.co/spaces/Deminiko/ct_url_breed
+
+          # Add and commit all files in the ct_url_breed folder
+          git add .
+          git commit -m "Sync ct_url_breed folder to Hugging Face Space"
+
+          # Force-push the contents of the temporary directory to the Hugging Face Space
+          git push --force origin main
