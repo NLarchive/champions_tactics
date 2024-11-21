@@ -30,20 +30,23 @@ jobs:
           # Navigate to the temporary directory
           cd "$temp_dir"
 
+          # Initialize a new Git repository in the temporary directory
+          git init
+
           # Configure Git user information for this repository
           git config user.email "lluin@hotmail.com"
           git config user.name "NLarchive"
 
-          # Initialize a new Git repository in the temporary directory
-          git init
-          git remote add origin https://huggingface.co/spaces/Deminiko/ct_url_breed
-
-          # Authenticate with Hugging Face
-          echo "${HF_TOKEN}" | git credential-cache store
-
           # Add and commit all files in the ct_url_breed folder
           git add .
           git commit -m "Sync ct_url_breed folder to Hugging Face Space"
+
+          # Add the Hugging Face repository as a remote
+          git remote add origin https://huggingface.co/spaces/Deminiko/ct_url_breed
+
+          # Authenticate with Hugging Face
+          git config credential.helper store
+          echo "https://huggingface.co=HF_TOKEN:${HF_TOKEN}" > ~/.git-credentials
 
           # Force-push the contents of the temporary directory to the Hugging Face Space
           git push --force origin main
