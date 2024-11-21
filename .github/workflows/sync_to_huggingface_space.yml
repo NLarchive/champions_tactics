@@ -32,7 +32,7 @@ jobs:
 
           # Configure Git author information
           git config user.email "lluin@hotmail.com"
-          git config user.name "NLarchive"
+          git config user.name "Nicolás Larenas"
 
           # Initialize a new git repository
           git init
