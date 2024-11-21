@@ -25,7 +25,7 @@ jobs:
           temp_dir=$(mktemp -d)
 
           # Copy all contents of the ct_url_breed folder to the temporary directory
-          cp -r . "$temp_dir/"
+          cp -r ./* "$temp_dir/"
 
           # Navigate to the temporary directory
           cd "$temp_dir"
@@ -37,6 +37,9 @@ jobs:
           # Initialize a new Git repository in the temporary directory
           git init
           git remote add origin https://huggingface.co/spaces/Deminiko/ct_url_breed
+
+          # Authenticate with Hugging Face
+          echo "${HF_TOKEN}" | git credential-cache store
 
           # Add and commit all files in the ct_url_breed folder
           git add .
