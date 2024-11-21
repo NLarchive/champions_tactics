@@ -38,7 +38,7 @@ jobs:
 
           echo "Configuring Git user information..."
           git config user.email "lluin@hotmail.com"
-          git config user.name "Nicolás Larenas"
+          git config user.name "NLarchive"
 
           echo "Adding Hugging Face repository as remote with authentication..."
           git remote add origin https://Deminiko:${HF_TOKEN}@huggingface.co/spaces/Deminiko/ct_url_breed.git
