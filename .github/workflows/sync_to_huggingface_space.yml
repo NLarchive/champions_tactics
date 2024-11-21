@@ -30,6 +30,10 @@ jobs:
           # Navigate to the temporary directory
           cd "$temp_dir"
 
+          # Configure Git author information
+          git config user.email "lluin@example.com"
+          git config user.name "NLarchive"
+
           # Initialize a new git repository
           git init
           git remote add origin https://huggingface.co/spaces/Deminiko/ct_url_breed
