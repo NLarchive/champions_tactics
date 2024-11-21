@@ -1,8 +1,9 @@
 name: Sync Subfolder to Hugging Face Space
+
 on:
   schedule:
-    - cron: '0 0 * * 1' # Weekly trigger
-  workflow_dispatch: # Allows manual triggering for testing
+    - cron: '0 0 * * 1' # Weekly trigger (every Monday at 00:00 UTC)
+  workflow_dispatch: # Allows manual triggering for testing or on-demand sync
 
 jobs:
   sync-to-hub:
@@ -20,12 +21,14 @@ jobs:
           # Navigate to the subfolder
           cd Deminiko/ct_url_breed
 
-          # Create a temporary directory to hold the subfolder contents
-          mkdir temp_dir
-          cp -r * temp_dir/
+          # Create a temporary directory outside the current working directory
+          temp_dir=$(mktemp -d)
+
+          # Copy all subfolder contents to the temporary directory
+          cp -r . "$temp_dir/"
 
           # Navigate to the temporary directory
-          cd temp_dir
+          cd "$temp_dir"
 
           # Initialize a new git repository
           git init
