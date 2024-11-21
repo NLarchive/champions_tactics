@@ -50,6 +50,6 @@ jobs:
           git commit -m "Sync ct_url_breed folder to Hugging Face Space"
 
           echo "Pushing changes to Hugging Face Space on the 'main' branch..."
-          git push origin main
+          git push --force origin main #force could overwrite could try later "--force-with-lease"
 
           echo "Sync completed successfully!"
