@@ -1,0 +1,5 @@
+gradio
+pandas
+beautifulsoup4
+numpy
+requests
