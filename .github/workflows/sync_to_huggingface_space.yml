@@ -31,7 +31,7 @@ jobs:
           cd "$temp_dir"
 
           # Configure Git author information
-          git config user.email "lluin@example.com"
+          git config user.email "lluin@hotmail.com"
           git config user.name "NLarchive"
 
           # Initialize a new git repository
