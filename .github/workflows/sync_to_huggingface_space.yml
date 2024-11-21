@@ -1,48 +1,55 @@
-- name: Sync ct_url_breed Folder to Hugging Face Space
+name: Sync ct_url_breed Folder to Hugging Face Space
+
 on:
+  schedule:
+    - cron: '0 0 * * 1' # Weekly trigger (every Monday at 00:00 UTC)
   workflow_dispatch: # Allows manual triggering for testing or on-demand sync
-  
-  env:
-    HF_TOKEN: ${{ secrets.HF_TOKEN }}
-  run: |
-    set -e  # Exit immediately if a command exits with a non-zero status
 
-    echo "Navigating to the ct_url_breed subfolder..."
-    cd Deminiko/ct_url_breed
+jobs:
+  sync-to-hf-space:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-    echo "Creating a temporary directory..."
-    temp_dir=$(mktemp -d)
-    echo "Temporary directory created at: $temp_dir"
+      - name: Sync ct_url_breed Folder to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -e  # Exit immediately if a command exits with a non-zero status
 
-    echo "Copying contents to the temporary directory..."
-    cp -r ./* "$temp_dir/"
+          echo "Navigating to the ct_url_breed subfolder..."
+          cd Deminiko/ct_url_breed
 
-    echo "Navigating to the temporary directory..."
-    cd "$temp_dir"
+          echo "Creating a temporary directory..."
+          temp_dir=$(mktemp -d)
+          echo "Temporary directory created at: $temp_dir"
 
-    echo "Initializing a new Git repository with 'main' as the default branch..."
-    git init -b main
+          echo "Copying contents to the temporary directory..."
+          cp -r ./* "$temp_dir/"
 
-    echo "Configuring Git user information..."
-    git config user.email "lluin@hotmail.com"
-    git config user.name "NLarchive"
+          echo "Navigating to the temporary directory..."
+          cd "$temp_dir"
 
-    echo "Adding Hugging Face repository as remote with authentication..."
-    git remote add origin https://Deminiko:${HF_TOKEN}@huggingface.co/spaces/Deminiko/ct_url_breed.git
+          echo "Initializing a new Git repository with 'main' as the default branch..."
+          git init -b main
 
-    echo "Fetching latest changes from the remote repository..."
-    git fetch origin main
+          echo "Configuring Git user information..."
+          git config user.email "lluin@hotmail.com"
+          git config user.name "NLarchive"
 
-    echo "Resetting local main branch to match remote main branch..."
-    git reset --soft origin/main
+          echo "Adding Hugging Face repository as remote with authentication..."
+          git remote add origin https://Deminiko:${HF_TOKEN}@huggingface.co/spaces/Deminiko/ct_url_breed.git
 
-    echo "Adding all files to Git..."
-    git add .
+          echo "Adding all files to Git..."
+          git add .
 
-    echo "Committing changes..."
-    git commit -m "Sync ct_url_breed folder to Hugging Face Space"
+          echo "Committing changes..."
+          git commit -m "Sync ct_url_breed folder to Hugging Face Space"
 
-    echo "Pushing changes to Hugging Face Space on the 'main' branch..."
-    git push origin main
+          echo "Pushing changes to Hugging Face Space on the 'main' branch..."
+          git push origin main
 
-    echo "Sync completed successfully!"
+          echo "Sync completed successfully!"
