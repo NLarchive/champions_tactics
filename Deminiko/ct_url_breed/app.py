@@ -1006,7 +1006,7 @@ def generate_random_child_genotype(top_allele_combos_per_locus):
 # ---------------------------
 
 with gr.Blocks() as demo:
-    gr.Markdown("# Champions Genotype & Stats Simulator")
+    gr.Markdown("# Champions Genotype & Stats Simulator 🧙‍♂️")
     gr.Markdown("This application retrieves parent genotypes from provided URLs, calculates the most probable offspring genotypes, and displays the stats for a randomly generated child genotype.")
     gr.Markdown("A correct URL starts with https://championstactics.ubisoft.com/items/champions/ followed by the number of the champion.")
 
