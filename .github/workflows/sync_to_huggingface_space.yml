@@ -40,14 +40,20 @@ jobs:
           git config user.email "lluin@hotmail.com"
           git config user.name "NLarchive"
 
-          echo "Adding Hugging Face repository as remote with authentication..."
-          git remote add origin https://Deminiko:${HF_TOKEN}@huggingface.co/spaces/Deminiko/ct_url_breed.git
-
           echo "Adding all files to Git..."
           git add .
 
           echo "Committing changes..."
           git commit -m "Sync ct_url_breed folder to Hugging Face Space"
+
+          echo "Setting up Git credentials for Hugging Face..."
+          git config credential.helper store
+          echo "https://huggingface.co" > ~/.git-credentials
+          echo "username=Deminiko" >> ~/.git-credentials
+          echo "password=${HF_TOKEN}" >> ~/.git-credentials
+
+          echo "Adding Hugging Face repository as remote..."
+          git remote add origin https://huggingface.co/spaces/Deminiko/ct_url_breed.git
 
           echo "Pushing changes to Hugging Face Space on the 'main' branch..."
           git push --force origin main
