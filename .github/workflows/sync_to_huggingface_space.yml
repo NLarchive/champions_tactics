@@ -1,46 +1,20 @@
-name: Sync Subfolder to Hugging Face Space
-
+name: Sync to Hugging Face hub
 on:
-  schedule:
-    - cron: '0 0 * * 1' # Weekly trigger (every Monday at 00:00 UTC)
-  workflow_dispatch: # Allows manual triggering for testing or on-demand sync
+  push:
+    branches: [main]
+
+  # to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Sync Subfolder to Hugging Face Space
+          lfs: true
+      - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          # Navigate to the subfolder
-          cd Deminiko/ct_url_breed
-
-          # Create a temporary directory outside the current working directory
-          temp_dir=$(mktemp -d)
-
-          # Copy all subfolder contents to the temporary directory
-          cp -r . "$temp_dir/"
-
-          # Navigate to the temporary directory
-          cd "$temp_dir"
-
-          # Configure Git author information
-          git config user.email "lluin@hotmail.com"
-          git config user.name "Nicolás Larenas"
-
-          # Initialize a new git repository
-          git init
-          git remote add origin https://huggingface.co/spaces/Deminiko/ct_url_breed
-
-          # Add and commit all files in the subfolder
-          git add .
-          git commit -m "Sync subfolder from Deminiko/ct_url_breed"
-
-          # Push the contents to the Hugging Face Space's main branch
-          git push --force origin main
+        run: git push https://HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/Deminiko/ct_url_breed
